@@ -56,7 +56,7 @@ function App() {
         </div>
 
         <div>
-          <h1>Merhak Platform</h1>
+          <h1>Nigga Platform</h1>
 
           <p>
             Backend status: <strong>{apiMessage}</strong>
