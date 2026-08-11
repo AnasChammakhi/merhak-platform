@@ -1,149 +1,35 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+
+import AdminRoute from "./components/admin/AdminRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Clients from "./pages/admin/Clients";
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [apiMessage, setApiMessage] = useState('Connecting to backend...')
-
-  useEffect(() => {
-    async function testBackend() {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/test`
-        )
-
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`)
-        }
-
-        const data = await response.json()
-        setApiMessage(data.message)
-      } catch (error) {
-        console.error('Backend connection error:', error)
-        setApiMessage('Could not connect to the backend')
-      }
-    }
-
-    testBackend()
-  }, [])
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img
-            src={heroImg}
-            className="base"
-            width="170"
-            height="179"
-            alt=""
-          />
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
-          <img
-            src={reactLogo}
-            className="framework"
-            alt="React logo"
-          />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
 
-          <img
-            src={viteLogo}
-            className="vite"
-            alt="Vite logo"
-          />
-        </div>
-
-        <div>
-          <h1>Nigga Platform</h1>
-
-          <p>
-            Backend status: <strong>{apiMessage}</strong>
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((currentCount) => currentCount + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-
-          <ul>
-            <li>
-              <a
-                href="https://vite.dev/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="https://react.dev/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-
-          <ul>
-            <li>
-              <a
-                href="https://github.com/vitejs/vite"
-                target="_blank"
-                rel="noreferrer"
-              >
-                GitHub
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="https://chat.vite.dev/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Discord
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <Route element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/clients" element={<Clients />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+export default App;
