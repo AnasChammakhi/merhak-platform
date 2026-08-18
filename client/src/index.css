@@ -50,10 +50,6 @@ body {
   min-height: 100vh;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
 
 button,
 input,
@@ -93,5 +89,23 @@ input:-webkit-autofill:focus {
 @media (min-width: 1024px) {
   .merhak-container {
     padding-inline: 32px;
+  }
+}
+
+@layer components {
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-[0.35em] text-[#0f73c4] mb-2 block;
+  }
+  .form-label {
+    @apply block text-sm font-medium text-[#10212f] mb-2;
+  }
+  .form-input {
+    @apply w-full rounded-xl border border-[#e5f1f8] bg-[#f7fbfe] px-4 py-3 text-sm text-[#10212f] outline-none transition focus:border-[#29b6f6] focus:bg-white;
+  }
+  .primary-button {
+    @apply inline-flex items-center justify-center rounded-full bg-[#0f73c4] px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-[#29b6f6] hover:shadow-md hover:shadow-[#29b6f6]/20 disabled:cursor-not-allowed disabled:opacity-70;
+  }
+  .table-heading {
+    @apply px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[#8ca0ad];
   }
 }

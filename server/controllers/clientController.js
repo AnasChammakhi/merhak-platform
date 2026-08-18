@@ -1,122 +1,110 @@
-const bcrypt = require("bcryptjs");
-const db = require("../config/database");
+const bcrypt =
+  require("bcryptjs");
+
+const db =
+  require("../config/database");
 
 
-// ========================================
+// ==========================================
 // GET ALL CLIENTS
-// ========================================
+// ==========================================
 
-const getClients = async (req, res) => {
-
+const getClients = async (
+  req,
+  res,
+  next
+) => {
   try {
+    const [clients] =
+      await db.execute(
+        `
+          SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
 
-    const [clients] = await db.execute(
-      `
-        SELECT
-          id,
-          first_name,
-          last_name,
-          email,
-          phone,
-          role
-        FROM users
-        WHERE role = 'CLIENT'
-        ORDER BY id DESC
-      `
-    );
+          FROM users
 
+          WHERE role = 'CLIENT'
 
-    return res.status(200).json(
-      clients
-    );
+          ORDER BY id DESC
+        `
+      );
 
+    res.json(clients);
   } catch (error) {
-
-    console.error(
-      "Get clients error:",
-      error
-    );
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 
 
-// ========================================
-// GET ONE CLIENT
-// ========================================
+// ==========================================
+// GET CLIENT
+// ==========================================
 
 const getClientById = async (
   req,
-  res
+  res,
+  next
 ) => {
-
   try {
+    const { id } =
+      req.params;
 
-    const { id } = req.params;
+    const [clients] =
+      await db.execute(
+        `
+          SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+
+          FROM users
+
+          WHERE id = ?
+          AND role = 'CLIENT'
+
+          LIMIT 1
+        `,
+        [id]
+      );
 
 
-    const [clients] = await db.execute(
-      `
-        SELECT
-          id,
-          first_name,
-          last_name,
-          email,
-          phone,
-          role
-        FROM users
-        WHERE id = ?
-        AND role = 'CLIENT'
-        LIMIT 1
-      `,
-      [id]
-    );
-
-
-    if (clients.length === 0) {
-
+    if (
+      clients.length === 0
+    ) {
       return res.status(404).json({
         success: false,
-        message: "Client introuvable.",
+        message:
+          "Client introuvable.",
       });
-
     }
 
 
-    return res.status(200).json(
+    res.json(
       clients[0]
     );
-
   } catch (error) {
-
-    console.error(error);
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 
 
-// ========================================
+// ==========================================
 // CREATE CLIENT
-// ========================================
+// ==========================================
 
 const createClient = async (
   req,
-  res
+  res,
+  next
 ) => {
-
   try {
-
-    const {
+    let {
       firstName,
       lastName,
       email,
@@ -125,37 +113,67 @@ const createClient = async (
     } = req.body;
 
 
+    firstName =
+      firstName?.trim();
+
+    lastName =
+      lastName?.trim();
+
+    email =
+      email
+        ?.trim()
+        .toLowerCase();
+
+    phone =
+      phone?.trim() || null;
+
+
     if (
       !firstName ||
       !lastName ||
       !email ||
       !password
     ) {
-
       return res.status(400).json({
         success: false,
         message:
           "Veuillez remplir les champs obligatoires.",
       });
-
     }
 
 
-    const [existingUsers] =
+    if (
+      password.length < 10 ||
+      password.length > 72
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Le mot de passe doit contenir entre 10 et 72 caractères.",
+      });
+    }
+
+
+    const [existing] =
       await db.execute(
-        "SELECT id FROM users WHERE email = ?",
+        `
+          SELECT id
+          FROM users
+          WHERE email = ?
+          LIMIT 1
+        `,
         [email]
       );
 
 
-    if (existingUsers.length > 0) {
-
+    if (
+      existing.length > 0
+    ) {
       return res.status(409).json({
         success: false,
         message:
-          "Cet email existe déjà.",
+          "Cette adresse e-mail est déjà utilisée.",
       });
-
     }
 
 
@@ -166,68 +184,80 @@ const createClient = async (
       );
 
 
-    const [result] = await db.execute(
-      `
-        INSERT INTO users
-        (
-          first_name,
-          last_name,
+    const [result] =
+      await db.execute(
+        `
+          INSERT INTO users
+          (
+            first_name,
+            last_name,
+            email,
+            phone,
+            password,
+            role
+          )
+
+          VALUES
+          (?, ?, ?, ?, ?, 'CLIENT')
+        `,
+        [
+          firstName,
+          lastName,
           email,
           phone,
-          password,
-          role
-        )
-        VALUES (?, ?, ?, ?, ?, 'CLIENT')
-      `,
-      [
-        firstName,
-        lastName,
-        email,
-        phone || null,
-        hashedPassword,
-      ]
-    );
+          hashedPassword,
+        ]
+      );
 
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message:
-        "Client créé avec succès.",
-      clientId: result.insertId,
+        "Client ajouté avec succès.",
+      clientId:
+        result.insertId,
     });
-
   } catch (error) {
-
-    console.error(error);
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 
 
-// ========================================
+// ==========================================
 // UPDATE CLIENT
-// ========================================
+// ==========================================
 
 const updateClient = async (
   req,
-  res
+  res,
+  next
 ) => {
-
   try {
+    const { id } =
+      req.params;
 
-    const { id } = req.params;
-
-    const {
+    let {
       firstName,
       lastName,
       email,
       phone,
+      password,
     } = req.body;
+
+
+    firstName =
+      firstName?.trim();
+
+    lastName =
+      lastName?.trim();
+
+    email =
+      email
+        ?.trim()
+        .toLowerCase();
+
+    phone =
+      phone?.trim() || null;
 
 
     if (
@@ -235,156 +265,185 @@ const updateClient = async (
       !lastName ||
       !email
     ) {
-
       return res.status(400).json({
         success: false,
         message:
-          "Informations obligatoires manquantes.",
+          "Veuillez remplir les champs obligatoires.",
       });
-
     }
 
 
-    // Check client
-    const [clients] = await db.execute(
-      `
-        SELECT id
-        FROM users
-        WHERE id = ?
-        AND role = 'CLIENT'
-      `,
-      [id]
-    );
+    const [clients] =
+      await db.execute(
+        `
+          SELECT id
+          FROM users
+          WHERE id = ?
+          AND role = 'CLIENT'
+          LIMIT 1
+        `,
+        [id]
+      );
 
 
-    if (clients.length === 0) {
-
+    if (
+      clients.length === 0
+    ) {
       return res.status(404).json({
         success: false,
-        message: "Client introuvable.",
+        message:
+          "Client introuvable.",
       });
-
     }
 
 
-    // Make sure another user
-    // doesn't already use this email
-    const [emailUsers] = await db.execute(
-      `
-        SELECT id
-        FROM users
-        WHERE email = ?
-        AND id != ?
-      `,
-      [
-        email,
-        id,
-      ]
-    );
+    const [existing] =
+      await db.execute(
+        `
+          SELECT id
+          FROM users
+          WHERE email = ?
+          AND id != ?
+          LIMIT 1
+        `,
+        [email, id]
+      );
 
 
-    if (emailUsers.length > 0) {
-
+    if (
+      existing.length > 0
+    ) {
       return res.status(409).json({
         success: false,
         message:
-          "Cet email est déjà utilisé.",
+          "Cette adresse e-mail est déjà utilisée.",
       });
-
     }
 
 
-    await db.execute(
-      `
-        UPDATE users
-
-        SET
-          first_name = ?,
-          last_name = ?,
-          email = ?,
-          phone = ?
-
-        WHERE id = ?
-        AND role = 'CLIENT'
-      `,
-      [
-        firstName,
-        lastName,
-        email,
-        phone || null,
-        id,
-      ]
-    );
+    if (password) {
+      if (
+        password.length < 10 ||
+        password.length > 72
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Le nouveau mot de passe doit contenir entre 10 et 72 caractères.",
+        });
+      }
 
 
-    return res.status(200).json({
+      const hashedPassword =
+        await bcrypt.hash(
+          password,
+          12
+        );
+
+
+      await db.execute(
+        `
+          UPDATE users
+
+          SET
+            first_name = ?,
+            last_name = ?,
+            email = ?,
+            phone = ?,
+            password = ?
+
+          WHERE id = ?
+          AND role = 'CLIENT'
+        `,
+        [
+          firstName,
+          lastName,
+          email,
+          phone,
+          hashedPassword,
+          id,
+        ]
+      );
+    } else {
+      await db.execute(
+        `
+          UPDATE users
+
+          SET
+            first_name = ?,
+            last_name = ?,
+            email = ?,
+            phone = ?
+
+          WHERE id = ?
+          AND role = 'CLIENT'
+        `,
+        [
+          firstName,
+          lastName,
+          email,
+          phone,
+          id,
+        ]
+      );
+    }
+
+
+    res.json({
       success: true,
       message:
         "Client modifié avec succès.",
     });
-
   } catch (error) {
-
-    console.error(error);
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 
 
-// ========================================
+// ==========================================
 // DELETE CLIENT
-// ========================================
+// ==========================================
 
 const deleteClient = async (
   req,
-  res
+  res,
+  next
 ) => {
-
   try {
-
-    const { id } = req.params;
-
-
-    const [result] = await db.execute(
-      `
-        DELETE FROM users
-        WHERE id = ?
-        AND role = 'CLIENT'
-      `,
-      [id]
-    );
+    const { id } =
+      req.params;
 
 
-    if (result.affectedRows === 0) {
+    const [result] =
+      await db.execute(
+        `
+          DELETE FROM users
 
+          WHERE id = ?
+          AND role = 'CLIENT'
+        `,
+        [id]
+      );
+
+
+    if (
+      result.affectedRows === 0
+    ) {
       return res.status(404).json({
         success: false,
-        message: "Client introuvable.",
+        message:
+          "Client introuvable.",
       });
-
     }
 
 
-    return res.status(200).json({
+    res.json({
       success: true,
       message:
         "Client supprimé avec succès.",
     });
-
   } catch (error) {
-
-    console.error(error);
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 

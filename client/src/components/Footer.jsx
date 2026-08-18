@@ -1,67 +1,84 @@
-import { Link } from "react-router-dom";
-import merhakLogo from "../assets/merhak logo blue simple.png";
+import {
+  Link,
+} from "react-router-dom";
+
+import logoWhite from "../assets/merhak logo white simple.png";
+
 
 function Footer() {
   return (
     <footer className="bg-[#0f73c4] text-white">
-      <div className="merhak-container py-14">
 
-        <div className="grid gap-10 md:grid-cols-3">
+      <div className="merhak-container py-16">
+
+        <div className="grid gap-12 md:grid-cols-3">
+
           <div>
             <img
-              src={merhakLogo}
-              alt="Merhak"
-              className="h-14 w-auto brightness-0 invert"
+              src={logoWhite}
+              alt="MERHAK"
+              className="h-12 w-auto"
             />
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/75">
-              Des vêtements premium confectionnés à partir de matières
-              naturelles et sélectionnées avec soin.
+            <p className="mt-6 max-w-sm text-sm leading-7 text-white/75">
+              Des vêtements premium conçus autour
+              de matières naturelles, de belles
+              coupes et d'un savoir-faire soigné.
             </p>
           </div>
 
+
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider">
+            <p className="font-semibold">
               Navigation
             </p>
 
-            <div className="mt-5 flex flex-col gap-3 text-sm text-white/75">
-              <Link to="/" className="hover:text-white">
+            <div className="mt-5 flex flex-col gap-3 text-sm text-white/70">
+
+              <Link to="/">
                 Accueil
               </Link>
 
-              <Link to="/about" className="hover:text-white">
+              <Link to="/about">
                 À propos
               </Link>
 
-              <Link to="/contact" className="hover:text-white">
+              <Link to="/contact">
                 Contact
               </Link>
+
             </div>
           </div>
 
+
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider">
-              La maison
+            <p className="font-semibold">
+              MERHAK
             </p>
 
-            <p className="mt-5 text-sm leading-7 text-white/75">
-              Lin, coton, matières naturelles et créations sur mesure.
+            <p className="mt-5 text-sm leading-7 text-white/70">
+              Lin, coton, matières naturelles
+              premium et confection sur mesure.
             </p>
 
-            <p className="mt-3 text-sm text-white/75">
-              Tunis, Tunisie
+            <p className="mt-3 text-sm text-white/70">
+              Tunisie
             </p>
           </div>
+
         </div>
 
-        <div className="mt-12 border-t border-white/15 pt-6 text-xs text-white/60">
-          © {new Date().getFullYear()}. Tous droits réservés.
+
+        <div className="mt-14 border-t border-white/15 pt-6 text-xs text-white/60">
+          © {new Date().getFullYear()} MERHAK.
+          Tous droits réservés.
         </div>
 
       </div>
+
     </footer>
   );
 }
+
 
 export default Footer;

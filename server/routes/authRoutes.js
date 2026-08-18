@@ -1,16 +1,59 @@
 const express = require("express");
 
+const router = express.Router();
+
 const {
   register,
   login,
+  me,
+  logout,
 } = require("../controllers/authController");
 
-const router = express.Router();
+const {
+  loginLimiter,
+  registerLimiter,
+} = require("../middleware/rateLimiters");
+
+const {
+  csrfToken,
+} = require("../middleware/csrfMiddleware");
 
 
-router.post("/register", register);
+// Get CSRF token
+router.get(
+  "/csrf",
+  csrfToken
+);
 
-router.post("/login", login);
+
+// Current connected user
+router.get(
+  "/me",
+  me
+);
+
+
+// Register
+router.post(
+  "/register",
+  registerLimiter,
+  register
+);
+
+
+// Login
+router.post(
+  "/login",
+  loginLimiter,
+  login
+);
+
+
+// Logout
+router.post(
+  "/logout",
+  logout
+);
 
 
 module.exports = router;

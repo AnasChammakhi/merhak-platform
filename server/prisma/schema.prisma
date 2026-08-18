@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -11,9 +12,15 @@ model User {
   firstName String   @map("first_name") @db.VarChar(100)
   lastName  String   @map("last_name") @db.VarChar(100)
   email     String   @unique @db.VarChar(255)
-  password  String   @db.VarChar(255)
+  password  String?  @db.VarChar(255) // nullable: admin can create a client without login access
   phone     String?  @db.VarChar(30)
+  address   String?  @map("address") @db.VarChar(255)
   role      UserRole @default(CLIENT)
+
+  measurements Measurement[]
+  orders       Order[]
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("users")
 }
@@ -21,4 +28,190 @@ model User {
 enum UserRole {
   CLIENT
   ADMIN
+}
+
+model Measurement {
+  id       Int    @id @default(autoincrement())
+  clientId Int    @map("client_id")
+  client   User   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  label    String @db.VarChar(100) // e.g. "Moi", "Ami Ahmed"
+
+  chestCirc     Decimal? @map("chest_circ") @db.Decimal(6, 2) // T.Poitrine
+  waistCirc     Decimal? @map("waist_circ") @db.Decimal(6, 2) // T.Taille
+  hipCirc       Decimal? @map("hip_circ") @db.Decimal(6, 2) // T.Hanche
+  armCirc       Decimal? @map("arm_circ") @db.Decimal(6, 2) // T.Bras
+  wristCirc     Decimal? @map("wrist_circ") @db.Decimal(6, 2) // T.Poignet
+  frontSquare   Decimal? @map("front_square") @db.Decimal(6, 2) // L.Carr DVT
+  backSquare    Decimal? @map("back_square") @db.Decimal(6, 2) // L.Carr DOS
+  shoulderLen   Decimal? @map("shoulder_len") @db.Decimal(6, 2) // L.Epaule
+  walkLen       Decimal? @map("walk_len") @db.Decimal(6, 2) // L.Marche
+  frontLen      Decimal? @map("front_len") @db.Decimal(6, 2) // L.DVT
+  dressLen      Decimal? @map("dress_len") @db.Decimal(6, 2) // L.Robe
+  shirtLen      Decimal? @map("shirt_len") @db.Decimal(6, 2) // L.Chemise
+  skirtLen      Decimal? @map("skirt_len") @db.Decimal(6, 2) // L.Jupe
+  pantsLen      Decimal? @map("pants_len") @db.Decimal(6, 2) // L.Pantalon
+  chestLen      Decimal? @map("chest_len") @db.Decimal(6, 2) // L.Poitrine
+  other         String?  @map("other") @db.Text // Autres
+
+  customOrderDetails CustomOrderDetail[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("measurements")
+}
+
+
+
+model Category {
+  id          Int    @id @default(autoincrement())
+  name        String @db.VarChar(255)
+  description String? @db.Text
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int      @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2) // prix de vente
+  cost        Decimal  @db.Decimal(10, 2) // coût de revient — pour les stats de profit
+  stock       Int      @default(0)
+  active      Boolean  @default(true)
+
+  images     ProductImage[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String  @db.VarChar(255)
+
+  @@map("product_images")
+}
+
+
+
+model Order {
+  id       Int    @id @default(autoincrement())
+  clientId Int?   @map("client_id") // null if not logged in
+  client   User?  @relation(fields: [clientId], references: [id])
+
+  // Snapshot at order time — auto-filled if logged in, manual otherwise
+  firstName String @map("first_name") @db.VarChar(255)
+  lastName  String @map("last_name") @db.VarChar(255)
+  phone     String @db.VarChar(30)
+  address   String @db.VarChar(255)
+
+  type   OrderType   @default(STANDARD)
+  status OrderStatus @default(NEW)
+  note   String?     @db.Text
+
+  totalPrice Decimal @map("total_price") @db.Decimal(10, 2)
+
+  items        OrderItem[]
+  customDetail CustomOrderDetail?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("orders")
+}
+
+enum OrderType {
+  STANDARD
+  CUSTOM // sur-mesure
+}
+
+enum OrderStatus {
+  NEW         // nouvelle
+  CONFIRMED   // confirmee
+  IN_PROGRESS // en_cours
+  READY       // prete
+  DELIVERED   // livree
+  CANCELLED   // annulee
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int     @map("order_id")
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+
+model CustomOrderDetail {
+  id            Int         @id @default(autoincrement())
+  orderId       Int         @unique @map("order_id")
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  measurementId Int         @map("measurement_id")
+  measurement   Measurement @relation(fields: [measurementId], references: [id])
+
+  fabricProvidedByClient Boolean @default(false) @map("fabric_provided_by_client")
+  fabricPricePerMeter    Decimal? @map("fabric_price_per_meter") @db.Decimal(10, 2)
+  metersNeeded           Decimal? @map("meters_needed") @db.Decimal(6, 2)
+  fabricTotalPrice       Decimal? @map("fabric_total_price") @db.Decimal(10, 2)
+
+  subcontractingCost Decimal @map("subcontracting_cost") @db.Decimal(10, 2)
+  laborCost          Decimal @map("labor_cost") @db.Decimal(10, 2)
+  recommendedPrice   Decimal @map("recommended_price") @db.Decimal(10, 2)
+  finalPrice         Decimal @map("final_price") @db.Decimal(10, 2)
+
+  imageUrl String? @map("image_url") @db.VarChar(255)
+
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+  deliveryDate DateTime @map("delivery_date")
+
+  @@map("custom_order_details")
+}
+
+
+
+model ContactMessage {
+  id      Int     @id @default(autoincrement())
+  name    String  @db.VarChar(255)
+  email   String  @db.VarChar(255)
+  phone   String? @db.VarChar(30)
+  message String  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+
+
+model RecurringExpense {
+  id        Int       @id @default(autoincrement())
+  type      String    @db.VarChar(100) // loyer, patente, steg, autre...
+  amount    Decimal   @db.Decimal(10, 2)
+  startDate DateTime  @map("start_date")
+  endDate   DateTime? @map("end_date") // null = toujours actif
+
+  @@map("recurring_expenses")
+}
+
+model OneTimeExpense {
+  id          Int      @id @default(autoincrement())
+  type        String   @db.VarChar(100)
+  amount      Decimal  @db.Decimal(10, 2)
+  month       DateTime // 1st of the month it applies to
+  description String?  @db.Text
+
+  @@map("one_time_expenses")
 }

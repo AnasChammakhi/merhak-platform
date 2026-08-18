@@ -1,27 +1,55 @@
-import { Navigate, Outlet } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+
+import {
+  useAuth,
+} from "../../context/AuthContext";
+
 
 function AdminRoute() {
-  const token = localStorage.getItem("token");
-  const storedUser = localStorage.getItem("user");
+  const {
+    user,
+    loading,
+  } = useAuth();
 
-  if (!token || !storedUser) {
-    return <Navigate to="/signin" replace />;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7fbfe]">
+        <p className="text-[#667785]">
+          Chargement...
+        </p>
+      </div>
+    );
   }
 
-  try {
-    const user = JSON.parse(storedUser);
 
-    if (user.role !== "ADMIN") {
-      return <Navigate to="/" replace />;
-    }
-  } catch {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    return <Navigate to="/signin" replace />;
+  if (!user) {
+    return (
+      <Navigate
+        to="/signin"
+        replace
+      />
+    );
   }
+
+
+  if (
+    user.role !== "ADMIN"
+  ) {
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
+
 
   return <Outlet />;
 }
+
 
 export default AdminRoute;

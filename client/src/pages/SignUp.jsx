@@ -1,13 +1,37 @@
-// src/pages/SignUp.jsx
+import {
+  useState,
+} from "react";
 
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+
+
 import Navbar from "../components/Navbar";
 
-function SignUp() {
-  const navigate = useNavigate();
+import {
+  useAuth,
+} from "../context/AuthContext";
 
-  const [formData, setFormData] = useState({
+
+function SignUp() {
+  const navigate =
+    useNavigate();
+
+
+  const {
+    user,
+    loading: authLoading,
+    register,
+  } = useAuth();
+
+
+  const [
+    formData,
+    setFormData,
+  ] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -16,73 +40,112 @@ function SignUp() {
     confirmPassword: "",
   });
 
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  function handleChange(e) {
+  const [
+    message,
+    setMessage,
+  ] = useState("");
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+
+  if (authLoading) {
+    return null;
+  }
+
+
+  if (user) {
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
+
+
+  function handleChange(
+    event
+  ) {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [event.target.name]:
+        event.target.value,
     });
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+
+  async function handleSubmit(
+    event
+  ) {
+    event.preventDefault();
 
     setMessage("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("Les mots de passe ne correspondent pas.");
+
+    if (
+      formData.password !==
+      formData.confirmPassword
+    ) {
+      setMessage(
+        "Les mots de passe ne correspondent pas."
+      );
+
       return;
     }
 
+
+    setLoading(true);
+
+
     try {
-      setLoading(true);
+      await register({
+        firstName:
+          formData.firstName,
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-          }),
-        }
+        lastName:
+          formData.lastName,
+
+        email:
+          formData.email,
+
+        phone:
+          formData.phone,
+
+        password:
+          formData.password,
+      });
+
+
+      navigate(
+        "/signin"
       );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(
-          data.message || "Impossible de créer votre compte."
-        );
-        return;
-      }
-
-      navigate("/signin");
     } catch (error) {
-      console.error(error);
-      setMessage("Impossible de contacter le serveur.");
+      setMessage(
+        error.message
+      );
     } finally {
       setLoading(false);
     }
   }
 
+
   return (
     <div className="min-h-screen bg-[#f7fbfe]">
+
       <Navbar />
 
+
       <section className="flex min-h-[calc(100vh-80px)] items-center justify-center px-6 py-16">
+
         <div className="w-full max-w-lg">
 
-          <div className="mb-10 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#29b6f6]">
+          <div className="mb-9 text-center">
+
+            <p className="section-label">
               MERHAK
             </p>
 
@@ -91,105 +154,141 @@ function SignUp() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-[#667785]">
-              Rejoignez MERHAK et profitez d'un espace dédié à vos commandes et vos créations sur mesure.
+              Retrouvez vos commandes et profitez
+              d'un espace dédié à vos créations
+              sur mesure.
             </p>
+
           </div>
 
+
           <form
-            onSubmit={handleSubmit}
+            onSubmit={
+              handleSubmit
+            }
             className="rounded-3xl bg-white p-8 shadow-sm md:p-10"
           >
+
             <div className="grid gap-6 sm:grid-cols-2">
+
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#10212f]">
+                <label className="form-label">
                   Prénom
                 </label>
 
                 <input
                   type="text"
                   name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
+                  value={
+                    formData.firstName
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  className="form-input"
                   required
                 />
               </div>
 
+
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#10212f]">
+                <label className="form-label">
                   Nom
                 </label>
 
                 <input
                   type="text"
                   name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
+                  value={
+                    formData.lastName
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  className="form-input"
                   required
                 />
               </div>
+
             </div>
 
-            <div className="mt-6">
-              <label className="mb-2 block text-sm font-medium text-[#10212f]">
-                Adresse e-mail
-              </label>
 
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
-                required
-              />
-            </div>
+            <label className="form-label mt-6">
+              Adresse e-mail
+            </label>
 
-            <div className="mt-6">
-              <label className="mb-2 block text-sm font-medium text-[#10212f]">
-                Téléphone
-              </label>
+            <input
+              type="email"
+              name="email"
+              value={
+                formData.email
+              }
+              onChange={
+                handleChange
+              }
+              className="form-input"
+              required
+            />
 
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+216 XX XXX XXX"
-                className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
-              />
-            </div>
 
-            <div className="mt-6">
-              <label className="mb-2 block text-sm font-medium text-[#10212f]">
-                Mot de passe
-              </label>
+            <label className="form-label mt-6">
+              Téléphone
+            </label>
 
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
-                required
-              />
-            </div>
+            <input
+              type="tel"
+              name="phone"
+              value={
+                formData.phone
+              }
+              onChange={
+                handleChange
+              }
+              className="form-input"
+              placeholder="+216 XX XXX XXX"
+            />
 
-            <div className="mt-6">
-              <label className="mb-2 block text-sm font-medium text-[#10212f]">
-                Confirmer le mot de passe
-              </label>
 
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-[#dcecf6] px-4 py-3 outline-none transition focus:border-[#29b6f6]"
-                required
-              />
-            </div>
+            <label className="form-label mt-6">
+              Mot de passe
+            </label>
+
+            <input
+              type="password"
+              name="password"
+              value={
+                formData.password
+              }
+              onChange={
+                handleChange
+              }
+              className="form-input"
+              minLength="10"
+              required
+            />
+
+            <p className="mt-2 text-xs text-[#8797a4]">
+              Au moins 10 caractères.
+            </p>
+
+
+            <label className="form-label mt-6">
+              Confirmer le mot de passe
+            </label>
+
+            <input
+              type="password"
+              name="confirmPassword"
+              value={
+                formData.confirmPassword
+              }
+              onChange={
+                handleChange
+              }
+              className="form-input"
+              required
+            />
+
 
             {message && (
               <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -197,16 +296,21 @@ function SignUp() {
               </p>
             )}
 
+
             <button
               type="submit"
               disabled={loading}
-              className="mt-8 w-full rounded-full bg-[#0f73c4] py-3.5 text-sm font-semibold text-white transition hover:bg-[#29b6f6] disabled:cursor-not-allowed disabled:opacity-50"
+              className="primary-button mt-8 w-full"
             >
-              {loading ? "Création..." : "Créer mon compte"}
+              {loading
+                ? "Création..."
+                : "Créer mon compte"}
             </button>
+
 
             <p className="mt-7 text-center text-sm text-[#667785]">
               Vous avez déjà un compte ?{" "}
+
               <Link
                 to="/signin"
                 className="font-semibold text-[#0f73c4] hover:text-[#29b6f6]"
@@ -214,11 +318,16 @@ function SignUp() {
                 Se connecter
               </Link>
             </p>
+
           </form>
+
         </div>
+
       </section>
+
     </div>
   );
 }
+
 
 export default SignUp;

@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   MagnifyingGlassIcon,
@@ -8,569 +12,701 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
-import { useNavigate } from "react-router-dom";
 
-const API_URL =
-  "http://localhost:5000/api/admin/clients";
+import {
+  apiFetch,
+} from "../../lib/api";
+
+
+const emptyForm = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+};
+
 
 function Clients() {
-  const navigate = useNavigate();
+  const [
+    clients,
+    setClients,
+  ] = useState([]);
 
-  const [clients, setClients] = useState([]);
-  const [search, setSearch] = useState("");
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
 
-  const [message, setMessage] = useState("");
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-  });
 
-  function getToken() {
-    return localStorage.getItem("token");
-  }
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
 
-  async function handleUnauthorized(response) {
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
 
-      navigate("/signin");
+  const [
+    modalOpen,
+    setModalOpen,
+  ] = useState(false);
 
-      return true;
-    }
 
-    if (response.status === 403) {
-      navigate("/");
+  const [
+    editingClient,
+    setEditingClient,
+  ] = useState(null);
 
-      return true;
-    }
 
-    return false;
-  }
+  const [
+    formData,
+    setFormData,
+  ] = useState(
+    emptyForm
+  );
 
-  // ========================================
-  // LOAD CLIENTS
-  // ========================================
+
+  const [
+    message,
+    setMessage,
+  ] = useState("");
+
 
   async function loadClients() {
     try {
       setLoading(true);
 
-      const response = await fetch(API_URL, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
-
-      if (await handleUnauthorized(response)) {
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(
-          data.message || "Impossible de charger les clients."
+      const data =
+        await apiFetch(
+          "/admin/clients"
         );
-
-        return;
-      }
 
       setClients(data);
     } catch (error) {
-      console.error(error);
-
-      setMessage("Impossible de contacter le serveur.");
+      setMessage(
+        error.message
+      );
     } finally {
       setLoading(false);
     }
   }
 
+
   useEffect(() => {
     loadClients();
   }, []);
 
-  // ========================================
-  // FORM
-  // ========================================
 
-  function handleChange(e) {
+  function handleChange(
+    event
+  ) {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+
+      [event.target.name]:
+        event.target.value,
     });
   }
+
 
   function openAddModal() {
-    setEditingClient(null);
-    setMessage("");
+    setEditingClient(
+      null
+    );
 
     setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      password: "",
+      ...emptyForm,
     });
 
-    setModalOpen(true);
-  }
-
-  function openEditModal(client) {
-    setEditingClient(client);
     setMessage("");
 
+    setModalOpen(
+      true
+    );
+  }
+
+
+  function openEditModal(
+    client
+  ) {
+    setEditingClient(
+      client
+    );
+
     setFormData({
-      firstName: client.first_name,
-      lastName: client.last_name,
-      email: client.email,
-      phone: client.phone || "",
-      password: "",
+      firstName:
+        client.first_name,
+
+      lastName:
+        client.last_name,
+
+      email:
+        client.email,
+
+      phone:
+        client.phone || "",
+
+      password:
+        "",
     });
 
-    setModalOpen(true);
+    setMessage("");
+
+    setModalOpen(
+      true
+    );
   }
+
 
   function closeModal() {
-    setModalOpen(false);
-    setEditingClient(null);
+    setModalOpen(
+      false
+    );
+
+    setEditingClient(
+      null
+    );
+
     setMessage("");
   }
 
-  // ========================================
-  // CREATE / UPDATE
-  // ========================================
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(
+    event
+  ) {
+    event.preventDefault();
 
     setMessage("");
+    setSaving(true);
 
-    if (
-      !formData.firstName ||
-      !formData.lastName ||
-      !formData.email
-    ) {
-      setMessage("Veuillez remplir les champs obligatoires.");
-      return;
-    }
-
-    if (!editingClient && !formData.password) {
-      setMessage(
-        "Le mot de passe est obligatoire pour créer un client."
-      );
-
-      return;
-    }
 
     try {
-      setSaving(true);
+      if (
+        editingClient
+      ) {
+        await apiFetch(
+          `/admin/clients/${editingClient.id}`,
+          {
+            method: "PUT",
 
-      const isEditing = Boolean(editingClient);
+            body: {
+              firstName:
+                formData.firstName,
 
-      const url = isEditing
-        ? `${API_URL}/${editingClient.id}`
-        : API_URL;
+              lastName:
+                formData.lastName,
 
-      const body = isEditing
-        ? {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
+              email:
+                formData.email,
+
+              phone:
+                formData.phone,
+
+              password:
+                formData.password ||
+                undefined,
+            },
           }
-        : {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-          };
+        );
+      } else {
+        await apiFetch(
+          "/admin/clients",
+          {
+            method: "POST",
 
-      const response = await fetch(url, {
-        method: isEditing ? "PUT" : "POST",
+            body: {
+              firstName:
+                formData.firstName,
 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
+              lastName:
+                formData.lastName,
 
-        body: JSON.stringify(body),
-      });
+              email:
+                formData.email,
 
-      if (await handleUnauthorized(response)) {
-        return;
+              phone:
+                formData.phone,
+
+              password:
+                formData.password,
+            },
+          }
+        );
       }
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(data.message || "Une erreur est survenue.");
-
-        return;
-      }
 
       closeModal();
 
       await loadClients();
     } catch (error) {
-      console.error(error);
-
-      setMessage("Impossible de contacter le serveur.");
+      setMessage(
+        error.message
+      );
     } finally {
       setSaving(false);
     }
   }
 
-  // ========================================
-  // DELETE
-  // ========================================
 
-  async function handleDelete(client) {
-    const confirmed = window.confirm(
-      `Voulez-vous vraiment supprimer ${client.first_name} ${client.last_name} ?`
-    );
+  async function handleDelete(
+    client
+  ) {
+    const confirmation =
+      window.confirm(
+        `Supprimer définitivement ${client.first_name} ${client.last_name} ?`
+      );
 
-    if (!confirmed) {
+
+    if (!confirmation) {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${API_URL}/${client.id}`,
-        {
-          method: "DELETE",
 
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-          },
+    try {
+      await apiFetch(
+        `/admin/clients/${client.id}`,
+        {
+          method:
+            "DELETE",
         }
       );
 
-      if (await handleUnauthorized(response)) {
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Suppression impossible.");
-
-        return;
-      }
 
       await loadClients();
     } catch (error) {
-      console.error(error);
-
-      alert("Impossible de contacter le serveur.");
+      window.alert(
+        error.message
+      );
     }
   }
 
-  // ========================================
-  // SEARCH
-  // ========================================
 
-  const filteredClients = clients.filter((client) => {
-    const value =
-      `${client.first_name} ${client.last_name} ${client.email} ${client.phone || ""}`
-        .toLowerCase();
+  const filteredClients =
+    useMemo(() => {
+      const term =
+        search
+          .trim()
+          .toLowerCase();
 
-    return value.includes(search.toLowerCase());
-  });
+
+      if (!term) {
+        return clients;
+      }
+
+
+      return clients.filter(
+        (client) => {
+          const text =
+            `
+              ${client.first_name}
+              ${client.last_name}
+              ${client.email}
+              ${client.phone || ""}
+            `.toLowerCase();
+
+
+          return text.includes(
+            term
+          );
+        }
+      );
+    }, [
+      clients,
+      search,
+    ]);
+
 
   return (
     <div className="p-8 lg:p-10">
-      {/* Header */}
+
       <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+
         <div>
-          <p className="text-sm text-gray-500">
+
+          <p className="text-sm font-semibold text-[#0f73c4]">
             Administration
           </p>
 
-          <h1 className="mt-1 text-3xl font-semibold text-black">
+          <h1 className="mt-1 text-3xl font-semibold text-[#10212f]">
             Gestion des clients
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-[#667785]">
             Gérez les comptes clients MERHAK.
           </p>
+
         </div>
 
+
         <button
-          onClick={openAddModal}
-          className="flex items-center justify-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
+          onClick={
+            openAddModal
+          }
+          className="primary-button flex items-center justify-center gap-2"
         >
+
           <PlusIcon className="h-5 w-5" />
 
           Ajouter un client
+
         </button>
+
       </div>
 
-      {/* Search */}
-      <div className="mt-8 flex items-center rounded-xl bg-white px-4 shadow-sm">
-        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+
+      <div className="mt-8 flex items-center rounded-2xl border border-[#e5f1f8] bg-white px-4 shadow-sm">
+
+        <MagnifyingGlassIcon className="h-5 w-5 text-[#8ca0ad]" />
 
         <input
-          type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un client..."
-          className="w-full bg-transparent px-3 py-4 text-sm text-black outline-none"
+          onChange={(event) =>
+            setSearch(
+              event.target.value
+            )
+          }
+          placeholder="Rechercher par nom, e-mail ou téléphone..."
+          className="w-full bg-transparent px-3 py-4 text-sm text-[#10212f] outline-none"
         />
+
       </div>
 
-      {/* Table */}
-      <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm">
+
+      <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+
         <div className="overflow-x-auto">
+
           <table className="w-full text-left">
-            <thead className="border-b border-gray-100 bg-gray-50">
+
+            <thead className="border-b border-[#e5f1f8] bg-[#f7fbfe]">
+
               <tr>
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500">
+
+                <th className="table-heading">
                   Client
                 </th>
 
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Email
+                <th className="table-heading">
+                  E-mail
                 </th>
 
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="table-heading">
                   Téléphone
                 </th>
 
-                <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="table-heading text-right">
                   Actions
                 </th>
+
               </tr>
+
             </thead>
 
-            <tbody className="divide-y divide-gray-100">
+
+            <tbody className="divide-y divide-[#edf4f8]">
+
               {loading ? (
                 <tr>
+
                   <td
                     colSpan="4"
-                    className="px-6 py-14 text-center text-sm text-gray-500"
+                    className="px-6 py-16 text-center text-sm text-[#667785]"
                   >
                     Chargement...
                   </td>
+
                 </tr>
-              ) : filteredClients.length === 0 ? (
+              ) : filteredClients.length ===
+                0 ? (
                 <tr>
+
                   <td
                     colSpan="4"
-                    className="px-6 py-14 text-center text-sm text-gray-500"
+                    className="px-6 py-16 text-center text-sm text-[#667785]"
                   >
                     Aucun client trouvé.
                   </td>
+
                 </tr>
               ) : (
-                filteredClients.map((client) => (
-                  <tr
-                    key={client.id}
-                    className="transition hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
-                          {client.first_name?.[0]}
-                          {client.last_name?.[0]}
+                filteredClients.map(
+                  (client) => (
+                    <tr
+                      key={
+                        client.id
+                      }
+                      className="transition hover:bg-[#fafdff]"
+                    >
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex items-center gap-3">
+
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eaf8ff] text-sm font-bold text-[#0f73c4]">
+                            {client.first_name?.[0]}
+                            {client.last_name?.[0]}
+                          </div>
+
+
+                          <div>
+
+                            <p className="font-medium text-[#10212f]">
+                              {client.first_name}{" "}
+                              {client.last_name}
+                            </p>
+
+                            <p className="mt-0.5 text-xs text-[#8ca0ad]">
+                              Client #{client.id}
+                            </p>
+
+                          </div>
+
                         </div>
 
-                        <div>
-                          <p className="font-medium text-black">
-                            {client.first_name}{" "}
-                            {client.last_name}
-                          </p>
+                      </td>
 
-                          <p className="text-xs text-gray-400">
-                            Client #{client.id}
-                          </p>
+
+                      <td className="px-6 py-5 text-sm text-[#667785]">
+                        {client.email}
+                      </td>
+
+
+                      <td className="px-6 py-5 text-sm text-[#667785]">
+                        {client.phone ||
+                          "—"}
+                      </td>
+
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex justify-end gap-2">
+
+                          <button
+                            onClick={() =>
+                              openEditModal(
+                                client
+                              )
+                            }
+                            className="rounded-xl p-2.5 text-[#667785] transition hover:bg-[#eaf8ff] hover:text-[#0f73c4]"
+                            title="Modifier"
+                          >
+                            <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+
+
+                          <button
+                            onClick={() =>
+                              handleDelete(
+                                client
+                              )
+                            }
+                            className="rounded-xl p-2.5 text-[#667785] transition hover:bg-red-50 hover:text-red-600"
+                            title="Supprimer"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+
                         </div>
-                      </div>
-                    </td>
 
-                    <td className="px-6 py-5 text-sm text-gray-600">
-                      {client.email}
-                    </td>
+                      </td>
 
-                    <td className="px-6 py-5 text-sm text-gray-600">
-                      {client.phone || "—"}
-                    </td>
-
-                    <td className="px-6 py-5">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() =>
-                            openEditModal(client)
-                          }
-                          className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-black"
-                          title="Modifier"
-                        >
-                          <PencilSquareIcon className="h-5 w-5" />
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            handleDelete(client)
-                          }
-                          className="rounded-lg p-2 text-gray-500 transition hover:bg-red-50 hover:text-red-600"
-                          title="Supprimer"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                    </tr>
+                  )
+                )
               )}
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
 
-      {/* MODAL */}
+
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-7 py-5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#071824]/55 p-4 backdrop-blur-sm">
+
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white shadow-2xl">
+
+            <div className="flex items-center justify-between border-b border-[#e5f1f8] px-7 py-6">
+
               <div>
-                <h2 className="text-xl font-semibold text-black">
+
+                <h2 className="text-xl font-semibold text-[#10212f]">
                   {editingClient
                     ? "Modifier le client"
                     : "Ajouter un client"}
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-[#667785]">
                   {editingClient
-                    ? "Modifiez les informations du client."
-                    : "Créez un nouveau compte client."}
+                    ? "Mettez à jour les informations du client."
+                    : "Créez un nouveau compte client MERHAK."}
                 </p>
+
               </div>
 
+
               <button
-                onClick={closeModal}
-                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-black"
+                onClick={
+                  closeModal
+                }
+                className="rounded-xl p-2 text-[#8ca0ad] transition hover:bg-[#f1f8fc] hover:text-[#10212f]"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
+
             </div>
 
+
             <form
-              onSubmit={handleSubmit}
-              className="space-y-5 p-7"
+              onSubmit={
+                handleSubmit
+              }
+              className="p-7"
             >
+
               <div className="grid gap-5 sm:grid-cols-2">
+
                 <div>
-                  <label className="mb-2 block text-sm text-black">
+
+                  <label className="form-label">
                     Prénom
                   </label>
 
                   <input
-                    type="text"
                     name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black outline-none transition focus:border-black"
+                    value={
+                      formData.firstName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className="form-input"
                     required
                   />
+
                 </div>
 
+
                 <div>
-                  <label className="mb-2 block text-sm text-black">
+
+                  <label className="form-label">
                     Nom
                   </label>
 
                   <input
-                    type="text"
                     name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black outline-none transition focus:border-black"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-black">
-                  Email
-                </label>
-
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black outline-none transition focus:border-black"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-black">
-                  Téléphone
-                </label>
-
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black outline-none transition focus:border-black"
-                />
-              </div>
-
-              {!editingClient && (
-                <div>
-                  <label className="mb-2 block text-sm text-black">
-                    Mot de passe
-                  </label>
-
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black outline-none transition focus:border-black"
+                    value={
+                      formData.lastName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className="form-input"
                     required
                   />
 
-                  <p className="mt-2 text-xs text-gray-400">
-                    Le client pourra utiliser ce mot de passe pour
-                    se connecter.
-                  </p>
                 </div>
+
+              </div>
+
+
+              <label className="form-label mt-5">
+                Adresse e-mail
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                value={
+                  formData.email
+                }
+                onChange={
+                  handleChange
+                }
+                className="form-input"
+                required
+              />
+
+
+              <label className="form-label mt-5">
+                Téléphone
+              </label>
+
+              <input
+                name="phone"
+                value={
+                  formData.phone
+                }
+                onChange={
+                  handleChange
+                }
+                className="form-input"
+              />
+
+
+              <label className="form-label mt-5">
+                {editingClient
+                  ? "Nouveau mot de passe"
+                  : "Mot de passe"}
+              </label>
+
+              <input
+                type="password"
+                name="password"
+                value={
+                  formData.password
+                }
+                onChange={
+                  handleChange
+                }
+                minLength="10"
+                className="form-input"
+                required={
+                  !editingClient
+                }
+              />
+
+
+              {editingClient && (
+                <p className="mt-2 text-xs text-[#8ca0ad]">
+                  Laissez vide pour conserver le mot de passe actuel.
+                </p>
               )}
 
+
               {message && (
-                <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
                   {message}
                 </p>
               )}
 
-              <div className="flex justify-end gap-3 pt-3">
+
+              <div className="mt-7 flex justify-end gap-3">
+
                 <button
                   type="button"
-                  onClick={closeModal}
-                  className="rounded-lg border border-gray-300 px-5 py-3 text-sm text-gray-600 transition hover:bg-gray-50"
+                  onClick={
+                    closeModal
+                  }
+                  className="rounded-full border border-[#dcecf6] px-6 py-3 text-sm font-medium text-[#667785] transition hover:bg-[#f7fbfe]"
                 >
                   Annuler
                 </button>
 
+
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+                  className="primary-button"
                 >
                   {saving
                     ? "Enregistrement..."
@@ -578,13 +714,19 @@ function Clients() {
                       ? "Enregistrer"
                       : "Ajouter le client"}
                 </button>
+
               </div>
+
             </form>
+
           </div>
+
         </div>
       )}
+
     </div>
   );
 }
+
 
 export default Clients;

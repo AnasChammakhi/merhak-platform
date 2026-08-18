@@ -1,11 +1,20 @@
-const express = require("express");
-const cors = require("cors");
+const express =
+  require("express");
+
+const cors =
+  require("cors");
+
+const helmet =
+  require("helmet");
+
+const session =
+  require("express-session");
 
 require("dotenv").config();
 
 
-const db =
-  require("./config/database");
+const sessionStore =
+  require("./config/sessionStore");
 
 const authRoutes =
   require("./routes/authRoutes");
@@ -13,84 +22,168 @@ const authRoutes =
 const clientRoutes =
   require("./routes/clientRoutes");
 
+const {
+  csrfProtection,
+} = require(
+  "./middleware/csrfMiddleware"
+);
 
-const app = express();
+const {
+  notFound,
+  errorHandler,
+} = require(
+  "./middleware/errorMiddleware"
+);
 
 
-// ==============================
-// MIDDLEWARE
-// ==============================
+const app =
+  express();
+
+
+const isProduction =
+  process.env.NODE_ENV ===
+  "production";
+
+
+// ==========================================
+// SECURITY
+// ==========================================
+
+app.disable(
+  "x-powered-by"
+);
+
+app.use(
+  helmet()
+);
+
+
+if (isProduction) {
+  app.set(
+    "trust proxy",
+    1
+  );
+}
+
+
+// ==========================================
+// CORS
+// ==========================================
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin:
+      process.env.CLIENT_URL,
+
+    credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "X-CSRF-Token",
+    ],
   })
 );
 
+
+// ==========================================
+// BODY
+// ==========================================
+
 app.use(
-  express.json()
+  express.json({
+    limit: "20kb",
+  })
 );
 
 
-// ==============================
-// BASIC ROUTES
-// ==============================
+// ==========================================
+// SESSION
+// ==========================================
 
-app.get("/", (req, res) => {
+app.use(
+  session({
+    name:
+      "merhak.sid",
 
-  res.json({
-    message:
-      "Merhak backend is working",
-  });
+    secret:
+      process.env.SESSION_SECRET,
 
-});
+    store:
+      sessionStore,
 
+    resave:
+      false,
+
+    saveUninitialized:
+      false,
+
+    rolling:
+      true,
+
+    cookie: {
+      httpOnly:
+        true,
+
+      secure:
+        isProduction,
+
+      sameSite:
+        "lax",
+
+      maxAge:
+        1000 *
+        60 *
+        60 *
+        8,
+
+      path:
+        "/",
+    },
+  })
+);
+
+
+// ==========================================
+// HEALTH
+// ==========================================
 
 app.get(
-  "/api/test-db",
-  async (req, res) => {
-
-    try {
-
-      const [rows] =
-        await db.execute(
-          "SELECT 1 AS connected"
-        );
-
-
-      res.json({
-        success: true,
-        message:
-          "Database connection successful",
-        result: rows,
-      });
-
-    } catch (error) {
-
-      console.error(error);
-
-
-      res.status(500).json({
-        success: false,
-        message:
-          "Database connection failed",
-      });
-
-    }
-
+  "/",
+  (req, res) => {
+    res.json({
+      message:
+        "API MERHAK opérationnelle",
+    });
   }
 );
 
 
-// ==============================
-// API ROUTES
-// ==============================
+// ==========================================
+// CSRF
+// ==========================================
+
+app.use(
+  csrfProtection
+);
+
+
+// ==========================================
+// ROUTES
+// ==========================================
 
 app.use(
   "/api/auth",
   authRoutes
 );
-
 
 app.use(
   "/api/admin/clients",
@@ -98,18 +191,32 @@ app.use(
 );
 
 
-// ==============================
-// SERVER
-// ==============================
+// ==========================================
+// ERRORS
+// ==========================================
+
+app.use(
+  notFound
+);
+
+app.use(
+  errorHandler
+);
+
+
+// ==========================================
+// START SERVER
+// ==========================================
 
 const PORT =
   process.env.PORT || 5000;
 
 
-app.listen(PORT, () => {
-
-  console.log(
-    `Server running on http://localhost:${PORT}`
-  );
-
-});
+app.listen(
+  PORT,
+  () => {
+    console.log(
+      `Serveur MERHAK : http://localhost:${PORT}`
+    );
+  }
+);

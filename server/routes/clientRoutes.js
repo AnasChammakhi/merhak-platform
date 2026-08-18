@@ -1,12 +1,15 @@
-const express = require("express");
-
-const router = express.Router();
+const express =
+  require("express");
 
 const authenticate =
-  require("../middleware/authMiddleware");
+  require(
+    "../middleware/authMiddleware"
+  );
 
 const requireAdmin =
-  require("../middleware/adminMiddleware");
+  require(
+    "../middleware/adminMiddleware"
+  );
 
 const {
   getClients,
@@ -19,9 +22,9 @@ const {
 );
 
 
-// Every route below requires:
-// 1. logged-in user
-// 2. ADMIN role
+const router =
+  express.Router();
+
 
 router.use(
   authenticate,
@@ -59,4 +62,5 @@ router.delete(
 );
 
 
-module.exports = router;
+module.exports =
+  router;

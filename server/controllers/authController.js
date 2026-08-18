@@ -1,15 +1,21 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const db = require("../config/database");
+const bcrypt =
+  require("bcryptjs");
+
+const db =
+  require("../config/database");
 
 
-// ========================================
+// ==========================================
 // REGISTER
-// ========================================
+// ==========================================
 
-const register = async (req, res) => {
+const register = async (
+  req,
+  res,
+  next
+) => {
   try {
-    const {
+    let {
       firstName,
       lastName,
       email,
@@ -17,184 +23,446 @@ const register = async (req, res) => {
       password,
     } = req.body;
 
+    firstName =
+      firstName?.trim();
 
-    // Check required fields
-    if (!firstName || !lastName || !email || !password) {
+    lastName =
+      lastName?.trim();
+
+    email =
+      email
+        ?.trim()
+        .toLowerCase();
+
+    phone =
+      phone?.trim() || null;
+
+
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Veuillez remplir tous les champs obligatoires.",
+        message:
+          "Veuillez remplir tous les champs obligatoires.",
       });
     }
 
 
-    // Check if email already exists
-    const [existingUsers] = await db.execute(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
+    if (
+      firstName.length > 100 ||
+      lastName.length > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Le nom ou le prénom est trop long.",
+      });
+    }
 
 
-    if (existingUsers.length > 0) {
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (
+      !emailRegex.test(email)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Adresse e-mail invalide.",
+      });
+    }
+
+
+    if (
+      password.length < 10 ||
+      password.length > 72
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Le mot de passe doit contenir entre 10 et 72 caractères.",
+      });
+    }
+
+
+    if (
+      phone &&
+      phone.length > 30
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Numéro de téléphone invalide.",
+      });
+    }
+
+
+    const [existingUsers] =
+      await db.execute(
+        `
+          SELECT id
+          FROM users
+          WHERE email = ?
+          LIMIT 1
+        `,
+        [email]
+      );
+
+
+    if (
+      existingUsers.length > 0
+    ) {
       return res.status(409).json({
         success: false,
-        message: "Un compte existe déjà avec cet email.",
+        message:
+          "Un compte existe déjà avec cette adresse e-mail.",
       });
     }
 
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(
-      password,
-      12
-    );
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        12
+      );
 
 
-    // Create user
-    // No role is sent because DB default = CLIENT
-    const [result] = await db.execute(
-      `
-        INSERT INTO users
-        (
-          first_name,
-          last_name,
+    const [result] =
+      await db.execute(
+        `
+          INSERT INTO users
+          (
+            first_name,
+            last_name,
+            email,
+            password,
+            phone
+          )
+          VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          firstName,
+          lastName,
           email,
-          password,
-          phone
-        )
-        VALUES (?, ?, ?, ?, ?)
-      `,
-      [
-        firstName,
-        lastName,
-        email,
-        hashedPassword,
-        phone || null,
-      ]
-    );
+          hashedPassword,
+          phone,
+        ]
+      );
 
 
     return res.status(201).json({
       success: true,
-      message: "Compte créé avec succès.",
-      userId: result.insertId,
+      message:
+        "Votre compte a été créé avec succès.",
+      userId:
+        result.insertId,
     });
-
   } catch (error) {
-    console.error("Register error:", error);
+    if (
+      error.code ===
+      "ER_DUP_ENTRY"
+    ) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Un compte existe déjà avec cette adresse e-mail.",
+      });
+    }
 
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
 };
 
 
-// ========================================
+// ==========================================
 // LOGIN
-// ========================================
+// ==========================================
 
-const login = async (req, res) => {
+const login = async (
+  req,
+  res,
+  next
+) => {
   try {
-    const {
+    let {
       email,
       password,
     } = req.body;
 
+    email =
+      email
+        ?.trim()
+        .toLowerCase();
 
-    if (!email || !password) {
+
+    if (
+      !email ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Email et mot de passe requis.",
+        message:
+          "Adresse e-mail et mot de passe requis.",
       });
     }
 
 
-    const [users] = await db.execute(
-      `
-        SELECT
-          id,
-          first_name,
-          last_name,
-          email,
-          password,
-          phone,
-          role
-        FROM users
-        WHERE email = ?
-        LIMIT 1
-      `,
-      [email]
-    );
+    const [users] =
+      await db.execute(
+        `
+          SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            password,
+            phone,
+            role
+
+          FROM users
+
+          WHERE email = ?
+
+          LIMIT 1
+        `,
+        [email]
+      );
 
 
-    if (users.length === 0) {
+    if (
+      users.length === 0
+    ) {
       return res.status(401).json({
         success: false,
-        message: "Email ou mot de passe incorrect.",
+        message:
+          "Adresse e-mail ou mot de passe incorrect.",
       });
     }
 
 
-    const user = users[0];
+    const user =
+      users[0];
 
 
-    // Compare typed password with hashed password
-    const passwordIsValid = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const passwordValid =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
 
 
-    if (!passwordIsValid) {
+    if (!passwordValid) {
       return res.status(401).json({
         success: false,
-        message: "Email ou mot de passe incorrect.",
+        message:
+          "Adresse e-mail ou mot de passe incorrect.",
       });
     }
 
 
-    // Create JWT
-    const token = jwt.sign(
-      {
-        id: user.id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
+    req.session.regenerate(
+      (error) => {
+        if (error) {
+          return next(error);
+        }
+
+
+        req.session.userId =
+          user.id;
+
+        req.session.role =
+          user.role;
+
+
+        req.session.save(
+          (saveError) => {
+            if (saveError) {
+              return next(
+                saveError
+              );
+            }
+
+
+            return res.json({
+              success: true,
+
+              message:
+                "Connexion réussie.",
+
+              user: {
+                id:
+                  user.id,
+
+                firstName:
+                  user.first_name,
+
+                lastName:
+                  user.last_name,
+
+                email:
+                  user.email,
+
+                phone:
+                  user.phone,
+
+                role:
+                  user.role,
+              },
+            });
+          }
+        );
       }
     );
+  } catch (error) {
+    next(error);
+  }
+};
 
 
-    return res.status(200).json({
+// ==========================================
+// CURRENT USER
+// ==========================================
+
+const me = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    if (
+      !req.session.userId
+    ) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Vous n'êtes pas connecté.",
+      });
+    }
+
+
+    const [users] =
+      await db.execute(
+        `
+          SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            phone,
+            role
+
+          FROM users
+
+          WHERE id = ?
+
+          LIMIT 1
+        `,
+        [
+          req.session.userId,
+        ]
+      );
+
+
+    if (
+      users.length === 0
+    ) {
+      req.session.destroy(
+        () => {}
+      );
+
+      return res.status(401).json({
+        success: false,
+        message:
+          "Session invalide.",
+      });
+    }
+
+
+    const user =
+      users[0];
+
+
+    req.session.role =
+      user.role;
+
+
+    return res.json({
       success: true,
-      message: "Connexion réussie.",
-
-      token,
 
       user: {
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
+        id:
+          user.id,
+
+        firstName:
+          user.first_name,
+
+        lastName:
+          user.last_name,
+
+        email:
+          user.email,
+
+        phone:
+          user.phone,
+
+        role:
+          user.role,
       },
     });
-
   } catch (error) {
-    console.error("Login error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur.",
-    });
+    next(error);
   }
+};
+
+
+// ==========================================
+// LOGOUT
+// ==========================================
+
+const logout = (
+  req,
+  res,
+  next
+) => {
+  req.session.destroy(
+    (error) => {
+      if (error) {
+        return next(error);
+      }
+
+      res.clearCookie(
+        "merhak.sid",
+        {
+          httpOnly: true,
+
+          secure:
+            process.env.NODE_ENV ===
+            "production",
+
+          sameSite: "lax",
+
+          path: "/",
+        }
+      );
+
+      res.json({
+        success: true,
+        message:
+          "Déconnexion réussie.",
+      });
+    }
+  );
 };
 
 
 module.exports = {
   register,
   login,
+  me,
+  logout,
 };
