@@ -19,10 +19,10 @@ import {
 
 
 const emptyForm = {
-  firstName: "",
-  lastName: "",
+  name: "",
   email: "",
   phone: "",
+  address: "",
   password: "",
 };
 
@@ -140,17 +140,17 @@ function Clients() {
     );
 
     setFormData({
-      firstName:
-        client.first_name,
-
-      lastName:
-        client.last_name,
+      name:
+        client.name,
 
       email:
         client.email,
 
       phone:
         client.phone || "",
+        
+      address:
+        client.address || "",
 
       password:
         "",
@@ -196,17 +196,17 @@ function Clients() {
             method: "PUT",
 
             body: {
-              firstName:
-                formData.firstName,
-
-              lastName:
-                formData.lastName,
+              name:
+                formData.name,
 
               email:
                 formData.email,
 
               phone:
                 formData.phone,
+
+              address:
+                formData.address,
 
               password:
                 formData.password ||
@@ -221,17 +221,17 @@ function Clients() {
             method: "POST",
 
             body: {
-              firstName:
-                formData.firstName,
-
-              lastName:
-                formData.lastName,
+              name:
+                formData.name,
 
               email:
                 formData.email,
 
               phone:
                 formData.phone,
+
+              address:
+                formData.address,
 
               password:
                 formData.password,
@@ -259,7 +259,7 @@ function Clients() {
   ) {
     const confirmation =
       window.confirm(
-        `Supprimer définitivement ${client.first_name} ${client.last_name} ?`
+        `Supprimer définitivement ${client.name} ?`
       );
 
 
@@ -304,10 +304,10 @@ function Clients() {
         (client) => {
           const text =
             `
-              ${client.first_name}
-              ${client.last_name}
+              ${client.name}
               ${client.email}
               ${client.phone || ""}
+              ${client.address || ""}
             `.toLowerCase();
 
 
@@ -449,16 +449,14 @@ function Clients() {
                         <div className="flex items-center gap-3">
 
                           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eaf8ff] text-sm font-bold text-[#0f73c4]">
-                            {client.first_name?.[0]}
-                            {client.last_name?.[0]}
+                            {client.name?.[0]}
                           </div>
 
 
                           <div>
 
                             <p className="font-medium text-[#10212f]">
-                              {client.first_name}{" "}
-                              {client.last_name}
+                              {client.name}
                             </p>
 
                             <p className="mt-0.5 text-xs text-[#8ca0ad]">
@@ -573,39 +571,18 @@ function Clients() {
               className="p-7"
             >
 
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-1">
 
                 <div>
 
                   <label className="form-label">
-                    Prénom
+                    Nom complet
                   </label>
 
                   <input
-                    name="firstName"
+                    name="name"
                     value={
-                      formData.firstName
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    className="form-input"
-                    required
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <label className="form-label">
-                    Nom
-                  </label>
-
-                  <input
-                    name="lastName"
-                    value={
-                      formData.lastName
+                      formData.name
                     }
                     onChange={
                       handleChange
@@ -633,7 +610,6 @@ function Clients() {
                   handleChange
                 }
                 className="form-input"
-                required
               />
 
 
@@ -645,6 +621,21 @@ function Clients() {
                 name="phone"
                 value={
                   formData.phone
+                }
+                onChange={
+                  handleChange
+                }
+                className="form-input"
+              />
+
+              <label className="form-label mt-5">
+                Adresse
+              </label>
+
+              <input
+                name="address"
+                value={
+                  formData.address
                 }
                 onChange={
                   handleChange
@@ -670,9 +661,6 @@ function Clients() {
                 }
                 minLength="10"
                 className="form-input"
-                required={
-                  !editingClient
-                }
               />
 
 

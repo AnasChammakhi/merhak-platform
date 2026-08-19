@@ -32,10 +32,10 @@ function SignUp() {
     formData,
     setFormData,
   ] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     phone: "",
+    address: "",
     password: "",
     confirmPassword: "",
   });
@@ -103,17 +103,17 @@ function SignUp() {
 
     try {
       await register({
-        firstName:
-          formData.firstName,
-
-        lastName:
-          formData.lastName,
+        name:
+          formData.name,
 
         email:
           formData.email,
 
         phone:
           formData.phone,
+
+        address:
+          formData.address,
 
         password:
           formData.password,
@@ -169,38 +169,18 @@ function SignUp() {
             className="rounded-3xl bg-white p-8 shadow-sm md:p-10"
           >
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-1">
 
               <div>
                 <label className="form-label">
-                  Prénom
+                  Nom complet
                 </label>
 
                 <input
                   type="text"
-                  name="firstName"
+                  name="name"
                   value={
-                    formData.firstName
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  className="form-input"
-                  required
-                />
-              </div>
-
-
-              <div>
-                <label className="form-label">
-                  Nom
-                </label>
-
-                <input
-                  type="text"
-                  name="lastName"
-                  value={
-                    formData.lastName
+                    formData.name
                   }
                   onChange={
                     handleChange
@@ -246,6 +226,24 @@ function SignUp() {
               }
               className="form-input"
               placeholder="+216 XX XXX XXX"
+              required
+            />
+
+            <label className="form-label mt-6">
+              Adresse
+            </label>
+
+            <input
+              type="text"
+              name="address"
+              value={
+                formData.address
+              }
+              onChange={
+                handleChange
+              }
+              className="form-input"
+              required
             />
 
 

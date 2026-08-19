@@ -74,7 +74,7 @@ function AdminDashboard() {
 
 
       <h1 className="mt-2 text-3xl font-semibold text-[#10212f]">
-        Bonjour {user?.firstName}
+        Bonjour {user?.name}
       </h1>
 
 

@@ -71,8 +71,7 @@ function AdminSidebar() {
         </p>
 
         <p className="mt-1 text-sm font-medium">
-          {user?.firstName}{" "}
-          {user?.lastName}
+          {user?.name}
         </p>
 
       </div>

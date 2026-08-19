@@ -16,18 +16,17 @@ const register = async (
 ) => {
   try {
     let {
-      firstName,
-      lastName,
+      name,
       email,
       phone,
+      address,
       password,
     } = req.body;
 
-    firstName =
-      firstName?.trim();
+    name =
+      name?.trim();
 
-    lastName =
-      lastName?.trim();
+
 
     email =
       email
@@ -37,12 +36,16 @@ const register = async (
     phone =
       phone?.trim() || null;
 
+    address =
+      address?.trim() || null;
+
 
     if (
-      !firstName ||
-      !lastName ||
+      !name ||
       !email ||
-      !password
+      !password ||
+      !phone ||
+      !address
     ) {
       return res.status(400).json({
         success: false,
@@ -53,13 +56,12 @@ const register = async (
 
 
     if (
-      firstName.length > 100 ||
-      lastName.length > 100
+      name.length > 200
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Le nom ou le prénom est trop long.",
+          "Le nom est trop long.",
       });
     }
 
@@ -137,20 +139,20 @@ const register = async (
         `
           INSERT INTO users
           (
-            first_name,
-            last_name,
+            name,
             email,
             password,
-            phone
+            phone,
+            address
           )
           VALUES (?, ?, ?, ?, ?)
         `,
         [
-          firstName,
-          lastName,
+          name,
           email,
           hashedPassword,
           phone,
+          address,
         ]
       );
 
@@ -217,11 +219,11 @@ const login = async (
         `
           SELECT
             id,
-            first_name,
-            last_name,
+            name,
             email,
             password,
             phone,
+            address,
             role
 
           FROM users
@@ -298,17 +300,17 @@ const login = async (
                 id:
                   user.id,
 
-                firstName:
-                  user.first_name,
-
-                lastName:
-                  user.last_name,
+                name:
+                  user.name,
 
                 email:
                   user.email,
 
                 phone:
                   user.phone,
+
+                address:
+                  user.address,
 
                 role:
                   user.role,
@@ -350,10 +352,10 @@ const me = async (
         `
           SELECT
             id,
-            first_name,
-            last_name,
+            name,
             email,
             phone,
+            address,
             role
 
           FROM users
@@ -398,17 +400,17 @@ const me = async (
         id:
           user.id,
 
-        firstName:
-          user.first_name,
-
-        lastName:
-          user.last_name,
+        name:
+          user.name,
 
         email:
           user.email,
 
         phone:
           user.phone,
+
+        address:
+          user.address,
 
         role:
           user.role,

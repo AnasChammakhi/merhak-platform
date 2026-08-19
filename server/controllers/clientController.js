@@ -20,10 +20,10 @@ const getClients = async (
         `
           SELECT
             id,
-            first_name,
-            last_name,
+            name,
             email,
-            phone
+            phone,
+            address
 
           FROM users
 
@@ -58,10 +58,10 @@ const getClientById = async (
         `
           SELECT
             id,
-            first_name,
-            last_name,
+            name,
             email,
-            phone
+            phone,
+            address
 
           FROM users
 
@@ -105,46 +105,44 @@ const createClient = async (
 ) => {
   try {
     let {
-      firstName,
-      lastName,
+      name,
       email,
       phone,
+      address,
       password,
     } = req.body;
 
 
-    firstName =
-      firstName?.trim();
-
-    lastName =
-      lastName?.trim();
+    name =
+      name?.trim();
 
     email =
       email
         ?.trim()
-        .toLowerCase();
+        .toLowerCase() || null;
 
     phone =
       phone?.trim() || null;
+      
+    address =
+      address?.trim() || null;
 
 
     if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password
+      !name
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Veuillez remplir les champs obligatoires.",
+          "Veuillez remplir le nom.",
       });
     }
 
 
     if (
+      password && (
       password.length < 10 ||
-      password.length > 72
+      password.length > 72)
     ) {
       return res.status(400).json({
         success: false,
@@ -154,34 +152,39 @@ const createClient = async (
     }
 
 
-    const [existing] =
-      await db.execute(
-        `
-          SELECT id
-          FROM users
-          WHERE email = ?
-          LIMIT 1
-        `,
-        [email]
-      );
+    if (email) {
+      const [existing] =
+        await db.execute(
+          `
+            SELECT id
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+          `,
+          [email]
+        );
 
 
-    if (
-      existing.length > 0
-    ) {
-      return res.status(409).json({
-        success: false,
-        message:
-          "Cette adresse e-mail est déjà utilisée.",
-      });
+      if (
+        existing.length > 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Cette adresse e-mail est déjà utilisée.",
+        });
+      }
     }
 
 
-    const hashedPassword =
-      await bcrypt.hash(
-        password,
-        12
-      );
+    let hashedPassword = null;
+    if (password) {
+      hashedPassword =
+        await bcrypt.hash(
+          password,
+          12
+        );
+    }
 
 
     const [result] =
@@ -189,10 +192,10 @@ const createClient = async (
         `
           INSERT INTO users
           (
-            first_name,
-            last_name,
+            name,
             email,
             phone,
+            address,
             password,
             role
           )
@@ -201,10 +204,10 @@ const createClient = async (
           (?, ?, ?, ?, ?, 'CLIENT')
         `,
         [
-          firstName,
-          lastName,
+          name,
           email,
           phone,
+          address,
           hashedPassword,
         ]
       );
@@ -237,38 +240,36 @@ const updateClient = async (
       req.params;
 
     let {
-      firstName,
-      lastName,
+      name,
       email,
       phone,
+      address,
       password,
     } = req.body;
 
 
-    firstName =
-      firstName?.trim();
-
-    lastName =
-      lastName?.trim();
+    name =
+      name?.trim();
 
     email =
       email
         ?.trim()
-        .toLowerCase();
+        .toLowerCase() || null;
 
     phone =
       phone?.trim() || null;
 
+    address =
+      address?.trim() || null;
+
 
     if (
-      !firstName ||
-      !lastName ||
-      !email
+      !name
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Veuillez remplir les champs obligatoires.",
+          "Veuillez remplir le nom.",
       });
     }
 
@@ -297,27 +298,29 @@ const updateClient = async (
     }
 
 
-    const [existing] =
-      await db.execute(
-        `
-          SELECT id
-          FROM users
-          WHERE email = ?
-          AND id != ?
-          LIMIT 1
-        `,
-        [email, id]
-      );
+    if (email) {
+      const [existing] =
+        await db.execute(
+          `
+            SELECT id
+            FROM users
+            WHERE email = ?
+            AND id != ?
+            LIMIT 1
+          `,
+          [email, id]
+        );
 
 
-    if (
-      existing.length > 0
-    ) {
-      return res.status(409).json({
-        success: false,
-        message:
-          "Cette adresse e-mail est déjà utilisée.",
-      });
+      if (
+        existing.length > 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Cette adresse e-mail est déjà utilisée.",
+        });
+      }
     }
 
 
@@ -346,20 +349,20 @@ const updateClient = async (
           UPDATE users
 
           SET
-            first_name = ?,
-            last_name = ?,
+            name = ?,
             email = ?,
             phone = ?,
+            address = ?,
             password = ?
 
           WHERE id = ?
           AND role = 'CLIENT'
         `,
         [
-          firstName,
-          lastName,
+          name,
           email,
           phone,
+          address,
           hashedPassword,
           id,
         ]
@@ -370,19 +373,19 @@ const updateClient = async (
           UPDATE users
 
           SET
-            first_name = ?,
-            last_name = ?,
+            name = ?,
             email = ?,
-            phone = ?
+            phone = ?,
+            address = ?
 
           WHERE id = ?
           AND role = 'CLIENT'
         `,
         [
-          firstName,
-          lastName,
+          name,
           email,
           phone,
+          address,
           id,
         ]
       );

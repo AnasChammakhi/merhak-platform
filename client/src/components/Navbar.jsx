@@ -120,7 +120,7 @@ function Navbar() {
                   <UserCircleIcon className="h-5 w-5 text-[#0f73c4]" />
 
                   <span className="text-sm font-medium text-[#10212f]">
-                    {user.firstName}
+                    {user.name}
                   </span>
                 </div>
 
@@ -210,7 +210,7 @@ function Navbar() {
                   <p className="text-sm text-[#667785]">
                     Bonjour{" "}
                     <strong className="text-[#10212f]">
-                      {user.firstName}
+                      {user.name}
                     </strong>
                   </p>
 
