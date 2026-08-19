@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -20,7 +19,7 @@ model User {
   measurements Measurement[]
   orders       Order[]
 
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("creted_at")
 
   @@map("users")
 }
