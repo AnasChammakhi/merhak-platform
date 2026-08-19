@@ -4,13 +4,17 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
+
+// ============================================================
+// USERS
+// ============================================================
 
 model User {
   id        Int      @id @default(autoincrement())
-  firstName String   @map("first_name") @db.VarChar(100)
-  lastName  String   @map("last_name") @db.VarChar(100)
-  email     String   @unique @db.VarChar(255)
+  name      String   @db.VarChar(200)
+  email     String?   @unique @db.VarChar(255)
   password  String?  @db.VarChar(255) // nullable: admin can create a client without login access
   phone     String?  @db.VarChar(30)
   address   String?  @map("address") @db.VarChar(255)
@@ -19,7 +23,7 @@ model User {
   measurements Measurement[]
   orders       Order[]
 
-  createdAt DateTime @default(now()) @map("creted_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("users")
 }
@@ -28,6 +32,10 @@ enum UserRole {
   CLIENT
   ADMIN
 }
+
+// ============================================================
+// MEASUREMENTS (mesures)
+// ============================================================
 
 model Measurement {
   id       Int    @id @default(autoincrement())
@@ -59,7 +67,9 @@ model Measurement {
   @@map("measurements")
 }
 
-
+// ============================================================
+// CATALOG
+// ============================================================
 
 model Category {
   id          Int    @id @default(autoincrement())
@@ -99,7 +109,9 @@ model ProductImage {
   @@map("product_images")
 }
 
-
+// ============================================================
+// ORDERS (commandes)
+// ============================================================
 
 model Order {
   id       Int    @id @default(autoincrement())
@@ -152,6 +164,9 @@ model OrderItem {
   @@map("order_items")
 }
 
+// ============================================================
+// CUSTOM ORDER DETAILS (sur_mesure_details)
+// ============================================================
 
 model CustomOrderDetail {
   id            Int         @id @default(autoincrement())
@@ -179,7 +194,9 @@ model CustomOrderDetail {
   @@map("custom_order_details")
 }
 
-
+// ============================================================
+// CONTACT
+// ============================================================
 
 model ContactMessage {
   id      Int     @id @default(autoincrement())
@@ -193,7 +210,9 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
-
+// ============================================================
+// EXPENSES (depenses)
+// ============================================================
 
 model RecurringExpense {
   id        Int       @id @default(autoincrement())
