@@ -17,6 +17,10 @@ const {
   createClient,
   updateClient,
   deleteClient,
+  getMeasurements,
+  createMeasurement,
+  updateMeasurement,
+  deleteMeasurement,
 } = require(
   "../controllers/clientController"
 );
@@ -59,6 +63,30 @@ router.put(
 router.delete(
   "/:id",
   deleteClient
+);
+
+
+router.get(
+  "/:id/measurements",
+  getMeasurements
+);
+
+
+router.post(
+  "/:id/measurements",
+  createMeasurement
+);
+
+
+router.put(
+  "/:id/measurements/:measurementId",
+  updateMeasurement
+);
+
+
+router.delete(
+  "/:id/measurements/:measurementId",
+  deleteMeasurement
 );
 
 

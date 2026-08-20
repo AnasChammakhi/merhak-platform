@@ -17,6 +17,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Clients from "./pages/admin/Clients";
+import ClientDetail from "./pages/admin/ClientDetail";
 
 
 function App() {
@@ -77,6 +78,13 @@ function App() {
             path="/admin/clients"
             element={
               <Clients />
+            }
+          />
+
+          <Route
+            path="/admin/clients/:id"
+            element={
+              <ClientDetail />
             }
           />
         </Route>

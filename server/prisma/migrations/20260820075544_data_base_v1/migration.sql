@@ -44,6 +44,7 @@ CREATE TABLE `categories` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `description` TEXT NULL,
+    `parent_id` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -56,7 +57,10 @@ CREATE TABLE `products` (
     `description` TEXT NULL,
     `price` DECIMAL(10, 2) NOT NULL,
     `cost` DECIMAL(10, 2) NOT NULL,
-    `stock` INTEGER NOT NULL DEFAULT 0,
+    `fabric_type` VARCHAR(100) NULL,
+    `delivery_cost` DECIMAL(10, 2) NULL,
+    `packaging_cost` DECIMAL(10, 2) NULL,
+    `stock` INTEGER NULL DEFAULT 0,
     `active` BOOLEAN NOT NULL DEFAULT true,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -69,6 +73,21 @@ CREATE TABLE `product_images` (
     `product_id` INTEGER NOT NULL,
     `url` VARCHAR(255) NOT NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `product_variants` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `product_id` INTEGER NOT NULL,
+    `size` VARCHAR(20) NOT NULL,
+    `color` VARCHAR(50) NOT NULL,
+    `stock` INTEGER NOT NULL DEFAULT 0,
+    `extra_price` DECIMAL(10, 2) NULL,
+    `sku` VARCHAR(100) NULL,
+
+    UNIQUE INDEX `product_variants_sku_key`(`sku`),
+    UNIQUE INDEX `product_variants_product_id_size_color_key`(`product_id`, `size`, `color`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -94,6 +113,7 @@ CREATE TABLE `order_items` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `order_id` INTEGER NOT NULL,
     `product_id` INTEGER NOT NULL,
+    `variant_id` INTEGER NULL,
     `quantity` INTEGER NOT NULL,
     `unit_price` DECIMAL(10, 2) NOT NULL,
 
@@ -105,6 +125,8 @@ CREATE TABLE `custom_order_details` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `order_id` INTEGER NOT NULL,
     `measurement_id` INTEGER NOT NULL,
+    `article_name` VARCHAR(255) NOT NULL,
+    `note` TEXT NULL,
     `fabric_provided_by_client` BOOLEAN NOT NULL DEFAULT false,
     `fabric_price_per_meter` DECIMAL(10, 2) NULL,
     `meters_needed` DECIMAL(6, 2) NULL,
@@ -113,6 +135,8 @@ CREATE TABLE `custom_order_details` (
     `labor_cost` DECIMAL(10, 2) NOT NULL,
     `recommended_price` DECIMAL(10, 2) NOT NULL,
     `final_price` DECIMAL(10, 2) NOT NULL,
+    `deposit_amount` DECIMAL(10, 2) NULL,
+    `deposit_date` DATETIME(3) NULL,
     `image_url` VARCHAR(255) NULL,
     `start_date` DATETIME(3) NOT NULL,
     `end_date` DATETIME(3) NOT NULL,
@@ -156,14 +180,36 @@ CREATE TABLE `one_time_expenses` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `finance_entries` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `type` ENUM('SALE', 'CUSTOM_ORDER', 'DEPOSIT', 'EXPENSE_RECURRING', 'EXPENSE_ONETIME', 'REFUND', 'OTHER') NOT NULL,
+    `direction` ENUM('INCOME', 'EXPENSE') NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `description` TEXT NULL,
+    `order_id` INTEGER NULL,
+    `recurring_expense_id` INTEGER NULL,
+    `one_time_expense_id` INTEGER NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `measurements` ADD CONSTRAINT `measurements_client_id_fkey` FOREIGN KEY (`client_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `categories` ADD CONSTRAINT `categories_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `categories`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `products` ADD CONSTRAINT `products_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `product_images` ADD CONSTRAINT `product_images_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `product_variants` ADD CONSTRAINT `product_variants_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `orders` ADD CONSTRAINT `orders_client_id_fkey` FOREIGN KEY (`client_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -175,7 +221,19 @@ ALTER TABLE `order_items` ADD CONSTRAINT `order_items_order_id_fkey` FOREIGN KEY
 ALTER TABLE `order_items` ADD CONSTRAINT `order_items_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `order_items` ADD CONSTRAINT `order_items_variant_id_fkey` FOREIGN KEY (`variant_id`) REFERENCES `product_variants`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `custom_order_details` ADD CONSTRAINT `custom_order_details_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `custom_order_details` ADD CONSTRAINT `custom_order_details_measurement_id_fkey` FOREIGN KEY (`measurement_id`) REFERENCES `measurements`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_recurring_expense_id_fkey` FOREIGN KEY (`recurring_expense_id`) REFERENCES `recurring_expenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_one_time_expense_id_fkey` FOREIGN KEY (`one_time_expense_id`) REFERENCES `one_time_expenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

@@ -11,13 +11,13 @@ datasource db {
 // ============================================================
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(200)
-  email     String?   @unique @db.VarChar(255)
-  password  String?  @db.VarChar(255) // nullable: admin can create a client without login access
-  phone     String?  @db.VarChar(30)
-  address   String?  @map("address") @db.VarChar(255)
-  role      UserRole @default(CLIENT)
+  id       Int      @id @default(autoincrement())
+  name     String   @db.VarChar(200)
+  email    String?  @unique @db.VarChar(255)
+  password String?  @db.VarChar(255) // nullable: admin can create a client without login access
+  phone    String?  @db.VarChar(30)
+  address  String?  @db.VarChar(255)
+  role     UserRole @default(CLIENT)
 
   measurements Measurement[]
   orders       Order[]
@@ -42,22 +42,22 @@ model Measurement {
   client   User   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   label    String @db.VarChar(100) // e.g. "Moi", "Ami Ahmed"
 
-  chestCirc     Decimal? @map("chest_circ") @db.Decimal(6, 2) // T.Poitrine
-  waistCirc     Decimal? @map("waist_circ") @db.Decimal(6, 2) // T.Taille
-  hipCirc       Decimal? @map("hip_circ") @db.Decimal(6, 2) // T.Hanche
-  armCirc       Decimal? @map("arm_circ") @db.Decimal(6, 2) // T.Bras
-  wristCirc     Decimal? @map("wrist_circ") @db.Decimal(6, 2) // T.Poignet
-  frontSquare   Decimal? @map("front_square") @db.Decimal(6, 2) // L.Carr DVT
-  backSquare    Decimal? @map("back_square") @db.Decimal(6, 2) // L.Carr DOS
-  shoulderLen   Decimal? @map("shoulder_len") @db.Decimal(6, 2) // L.Epaule
-  walkLen       Decimal? @map("walk_len") @db.Decimal(6, 2) // L.Marche
-  frontLen      Decimal? @map("front_len") @db.Decimal(6, 2) // L.DVT
-  dressLen      Decimal? @map("dress_len") @db.Decimal(6, 2) // L.Robe
-  shirtLen      Decimal? @map("shirt_len") @db.Decimal(6, 2) // L.Chemise
-  skirtLen      Decimal? @map("skirt_len") @db.Decimal(6, 2) // L.Jupe
-  pantsLen      Decimal? @map("pants_len") @db.Decimal(6, 2) // L.Pantalon
-  chestLen      Decimal? @map("chest_len") @db.Decimal(6, 2) // L.Poitrine
-  other         String?  @map("other") @db.Text // Autres
+  chestCirc   Decimal? @map("chest_circ") @db.Decimal(6, 2) // T.Poitrine
+  waistCirc   Decimal? @map("waist_circ") @db.Decimal(6, 2) // T.Taille
+  hipCirc     Decimal? @map("hip_circ") @db.Decimal(6, 2) // T.Hanche
+  armCirc     Decimal? @map("arm_circ") @db.Decimal(6, 2) // T.Bras
+  wristCirc   Decimal? @map("wrist_circ") @db.Decimal(6, 2) // T.Poignet
+  frontSquare Decimal? @map("front_square") @db.Decimal(6, 2) // L.Carr DVT
+  backSquare  Decimal? @map("back_square") @db.Decimal(6, 2) // L.Carr DOS
+  shoulderLen Decimal? @map("shoulder_len") @db.Decimal(6, 2) // L.Epaule
+  walkLen     Decimal? @map("walk_len") @db.Decimal(6, 2) // L.Marche
+  frontLen    Decimal? @map("front_len") @db.Decimal(6, 2) // L.DVT
+  dressLen    Decimal? @map("dress_len") @db.Decimal(6, 2) // L.Robe
+  shirtLen    Decimal? @map("shirt_len") @db.Decimal(6, 2) // L.Chemise
+  skirtLen    Decimal? @map("skirt_len") @db.Decimal(6, 2) // L.Jupe
+  pantsLen    Decimal? @map("pants_len") @db.Decimal(6, 2) // L.Pantalon
+  chestLen    Decimal? @map("chest_len") @db.Decimal(6, 2) // L.Poitrine
+  other       String?  @db.Text // Autres
 
   customOrderDetails CustomOrderDetail[]
 
@@ -67,7 +67,7 @@ model Measurement {
 }
 
 // ============================================================
-// CATALOG
+// CATEGORIES (hierarchical: niv1 > niv2 > niv3, unlimited depth)
 // ============================================================
 
 model Category {
@@ -75,23 +75,35 @@ model Category {
   name        String @db.VarChar(255)
   description String? @db.Text
 
+  parentId Int?       @map("parent_id")
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children Category[] @relation("CategoryTree")
+
   products Product[]
 
   @@map("categories")
 }
 
+// ============================================================
+// PRODUCTS
+// ============================================================
+
 model Product {
-  id          Int      @id @default(autoincrement())
-  categoryId  Int      @map("category_id")
-  category    Category @relation(fields: [categoryId], references: [id])
-  name        String   @db.VarChar(255)
-  description String?  @db.Text
-  price       Decimal  @db.Decimal(10, 2) // prix de vente
-  cost        Decimal  @db.Decimal(10, 2) // coût de revient — pour les stats de profit
-  stock       Int      @default(0)
-  active      Boolean  @default(true)
+  id            Int      @id @default(autoincrement())
+  categoryId    Int      @map("category_id")
+  category      Category @relation(fields: [categoryId], references: [id])
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  price         Decimal  @db.Decimal(10, 2) // prix de vente
+  cost          Decimal  @db.Decimal(10, 2) // coût de revient — pour les stats de profit
+  fabricType    String?  @map("fabric_type") @db.VarChar(100) // lin, coton...
+  deliveryCost  Decimal? @map("delivery_cost") @db.Decimal(10, 2)
+  packagingCost Decimal? @map("packaging_cost") @db.Decimal(10, 2)
+  stock         Int?     @default(0) // used only if product has no variants
+  active        Boolean  @default(true)
 
   images     ProductImage[]
+  variants   ProductVariant[]
   orderItems OrderItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -108,14 +120,31 @@ model ProductImage {
   @@map("product_images")
 }
 
+// A product can have many size/color combinations (e.g. Pantalon -> S/M/L/XL or 38/40/42, each in several colors)
+model ProductVariant {
+  id         Int      @id @default(autoincrement())
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size       String   @db.VarChar(20) // "S","M","L","XL" or "38","40","42"...
+  color      String   @db.VarChar(50) // "Bleu","Blanc"...
+  stock      Int      @default(0)
+  extraPrice Decimal? @map("extra_price") @db.Decimal(10, 2) // optional surcharge for this variant
+  sku        String?  @unique @db.VarChar(100)
+
+  orderItems OrderItem[]
+
+  @@unique([productId, size, color])
+  @@map("product_variants")
+}
+
 // ============================================================
 // ORDERS (commandes)
 // ============================================================
 
 model Order {
-  id       Int    @id @default(autoincrement())
-  clientId Int?   @map("client_id") // null if not logged in
-  client   User?  @relation(fields: [clientId], references: [id])
+  id       Int   @id @default(autoincrement())
+  clientId Int?  @map("client_id") // null if not logged in
+  client   User? @relation(fields: [clientId], references: [id])
 
   // Snapshot at order time — auto-filled if logged in, manual otherwise
   firstName String @map("first_name") @db.VarChar(255)
@@ -129,8 +158,9 @@ model Order {
 
   totalPrice Decimal @map("total_price") @db.Decimal(10, 2)
 
-  items        OrderItem[]
-  customDetail CustomOrderDetail?
+  items         OrderItem[]
+  customDetail  CustomOrderDetail?
+  financeEntries FinanceEntry[]
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -152,13 +182,15 @@ enum OrderStatus {
 }
 
 model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int     @map("order_id")
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id])
+  id        Int             @id @default(autoincrement())
+  orderId   Int             @map("order_id")
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int             @map("product_id")
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId Int?            @map("variant_id") // which size/color was picked, if applicable
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
   quantity  Int
-  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+  unitPrice Decimal         @map("unit_price") @db.Decimal(10, 2)
 
   @@map("order_items")
 }
@@ -172,9 +204,12 @@ model CustomOrderDetail {
   orderId       Int         @unique @map("order_id")
   order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   measurementId Int         @map("measurement_id")
-  measurement   Measurement @relation(fields: [measurementId], references: [id])
+  measurement   Measurement @relation(fields: [measurementId], references: [id], onDelete: Restrict)
 
-  fabricProvidedByClient Boolean @default(false) @map("fabric_provided_by_client")
+  articleName String  @map("article_name") @db.VarChar(255) // nom d'article (ex: "Robe de soirée")
+  note        String? @db.Text
+
+  fabricProvidedByClient Boolean  @default(false) @map("fabric_provided_by_client")
   fabricPricePerMeter    Decimal? @map("fabric_price_per_meter") @db.Decimal(10, 2)
   metersNeeded           Decimal? @map("meters_needed") @db.Decimal(6, 2)
   fabricTotalPrice       Decimal? @map("fabric_total_price") @db.Decimal(10, 2)
@@ -183,6 +218,9 @@ model CustomOrderDetail {
   laborCost          Decimal @map("labor_cost") @db.Decimal(10, 2)
   recommendedPrice   Decimal @map("recommended_price") @db.Decimal(10, 2)
   finalPrice         Decimal @map("final_price") @db.Decimal(10, 2)
+
+  depositAmount Decimal?  @map("deposit_amount") @db.Decimal(10, 2) // acompte
+  depositDate   DateTime? @map("deposit_date")
 
   imageUrl String? @map("image_url") @db.VarChar(255)
 
@@ -220,6 +258,8 @@ model RecurringExpense {
   startDate DateTime  @map("start_date")
   endDate   DateTime? @map("end_date") // null = toujours actif
 
+  financeEntries FinanceEntry[]
+
   @@map("recurring_expenses")
 }
 
@@ -230,5 +270,47 @@ model OneTimeExpense {
   month       DateTime // 1st of the month it applies to
   description String?  @db.Text
 
+  financeEntries FinanceEntry[]
+
   @@map("one_time_expenses")
+}
+
+// ============================================================
+// FINANCE (ledger / historique — every money movement gets a row here)
+// ============================================================
+
+model FinanceEntry {
+  id        Int                @id @default(autoincrement())
+  type      FinanceEntryType
+  direction FinanceDirection // INCOME or EXPENSE
+  amount    Decimal            @db.Decimal(10, 2)
+  date      DateTime           @default(now()) // actual date of the transaction (can be backdated)
+  description String?          @db.Text
+
+  // Optional links back to the source of this entry — only one will be set depending on `type`
+  orderId              Int?              @map("order_id")
+  order                Order?            @relation(fields: [orderId], references: [id])
+  recurringExpenseId   Int?              @map("recurring_expense_id")
+  recurringExpense     RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
+  oneTimeExpenseId     Int?              @map("one_time_expense_id")
+  oneTimeExpense       OneTimeExpense?   @relation(fields: [oneTimeExpenseId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("finance_entries")
+}
+
+enum FinanceEntryType {
+  SALE           // vente produit standard
+  CUSTOM_ORDER   // vente sur-mesure (prix final)
+  DEPOSIT        // acompte reçu
+  EXPENSE_RECURRING
+  EXPENSE_ONETIME
+  REFUND
+  OTHER
+}
+
+enum FinanceDirection {
+  INCOME
+  EXPENSE
 }

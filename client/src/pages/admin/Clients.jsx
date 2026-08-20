@@ -10,7 +10,10 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
+
+import { Link } from "react-router-dom";
 
 
 import {
@@ -484,6 +487,14 @@ function Clients() {
                       <td className="px-6 py-5">
 
                         <div className="flex justify-end gap-2">
+
+                          <Link
+                            to={`/admin/clients/${client.id}`}
+                            className="rounded-xl p-2.5 text-[#667785] transition hover:bg-[#eaf8ff] hover:text-[#0f73c4]"
+                            title="Voir les détails"
+                          >
+                            <EyeIcon className="h-5 w-5" />
+                          </Link>
 
                           <button
                             onClick={() =>

@@ -451,10 +451,285 @@ const deleteClient = async (
 };
 
 
+// ==========================================
+// GET MEASUREMENTS
+// ==========================================
+
+const getMeasurements = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { id } =
+      req.params;
+
+    const [measurements] =
+      await db.execute(
+        `
+          SELECT *
+          FROM measurements
+          WHERE client_id = ?
+          ORDER BY created_at DESC
+        `,
+        [id]
+      );
+
+    res.json(measurements);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ==========================================
+// CREATE MEASUREMENT
+// ==========================================
+
+const createMeasurement = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { id: clientId } =
+      req.params;
+
+    const {
+      label,
+      chestCirc,
+      waistCirc,
+      hipCirc,
+      armCirc,
+      wristCirc,
+      frontSquare,
+      backSquare,
+      shoulderLen,
+      walkLen,
+      frontLen,
+      dressLen,
+      shirtLen,
+      skirtLen,
+      pantsLen,
+      chestLen,
+      other,
+    } = req.body;
+
+    const finalLabel = label?.trim() || "Moi";
+
+    // verify client exists
+    const [clients] = await db.execute(
+      `SELECT id FROM users WHERE id = ? AND role = 'CLIENT' LIMIT 1`,
+      [clientId]
+    );
+
+    if (clients.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Client introuvable.",
+      });
+    }
+
+    const [result] = await db.execute(
+      `
+        INSERT INTO measurements
+        (
+          client_id, label, chest_circ, waist_circ, hip_circ,
+          arm_circ, wrist_circ, front_square, back_square, shoulder_len,
+          walk_len, front_len, dress_len, shirt_len, skirt_len,
+          pants_len, chest_len, other
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        clientId,
+        finalLabel,
+        chestCirc || null,
+        waistCirc || null,
+        hipCirc || null,
+        armCirc || null,
+        wristCirc || null,
+        frontSquare || null,
+        backSquare || null,
+        shoulderLen || null,
+        walkLen || null,
+        frontLen || null,
+        dressLen || null,
+        shirtLen || null,
+        skirtLen || null,
+        pantsLen || null,
+        chestLen || null,
+        other?.trim() || null,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Mesures ajoutées avec succès.",
+      measurementId: result.insertId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ==========================================
+// UPDATE MEASUREMENT
+// ==========================================
+
+const updateMeasurement = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { id: clientId, measurementId } = req.params;
+
+    const {
+      label,
+      chestCirc,
+      waistCirc,
+      hipCirc,
+      armCirc,
+      wristCirc,
+      frontSquare,
+      backSquare,
+      shoulderLen,
+      walkLen,
+      frontLen,
+      dressLen,
+      shirtLen,
+      skirtLen,
+      pantsLen,
+      chestLen,
+      other,
+    } = req.body;
+
+    const finalLabel = label?.trim() || "Moi";
+
+    const [result] = await db.execute(
+      `
+        UPDATE measurements
+        SET
+          label = ?,
+          chest_circ = ?,
+          waist_circ = ?,
+          hip_circ = ?,
+          arm_circ = ?,
+          wrist_circ = ?,
+          front_square = ?,
+          back_square = ?,
+          shoulder_len = ?,
+          walk_len = ?,
+          front_len = ?,
+          dress_len = ?,
+          shirt_len = ?,
+          skirt_len = ?,
+          pants_len = ?,
+          chest_len = ?,
+          other = ?
+        WHERE id = ? AND client_id = ?
+      `,
+      [
+        finalLabel,
+        chestCirc || null,
+        waistCirc || null,
+        hipCirc || null,
+        armCirc || null,
+        wristCirc || null,
+        frontSquare || null,
+        backSquare || null,
+        shoulderLen || null,
+        walkLen || null,
+        frontLen || null,
+        dressLen || null,
+        shirtLen || null,
+        skirtLen || null,
+        pantsLen || null,
+        chestLen || null,
+        other?.trim() || null,
+        measurementId,
+        clientId,
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Mesures introuvables.",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Mesures modifiées avec succès.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ==========================================
+// DELETE MEASUREMENT
+// ==========================================
+
+const deleteMeasurement = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { id: clientId, measurementId } = req.params;
+
+    // verify if used in an order
+    const [usage] = await db.execute(
+      `SELECT id FROM custom_order_details WHERE measurement_id = ? LIMIT 1`,
+      [measurementId]
+    );
+
+    if (usage.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Impossible de supprimer ces mesures car elles sont utilisées dans une commande sur-mesure.",
+      });
+    }
+
+    const [result] = await db.execute(
+      `
+        DELETE FROM measurements
+        WHERE id = ? AND client_id = ?
+      `,
+      [measurementId, clientId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Mesures introuvables.",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Mesures supprimées avec succès.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 module.exports = {
   getClients,
   getClientById,
   createClient,
   updateClient,
   deleteClient,
+  getMeasurements,
+  createMeasurement,
+  updateMeasurement,
+  deleteMeasurement,
 };
