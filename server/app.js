@@ -72,8 +72,18 @@ if (isProduction) {
 
 app.use(
   cors({
-    origin:
-      process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      const allowed = process.env.CLIENT_URL
+        ? process.env.CLIENT_URL.replace(/\/+$/, "")
+        : undefined;
+
+      // allow non-browser requests like Postman (no origin)
+      if (!origin) return callback(null, true);
+
+      if (origin === allowed) return callback(null, true);
+
+      return callback(new Error("CORS policy: origin not allowed"));
+    },
 
     credentials: true,
 

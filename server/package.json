@@ -14,7 +14,6 @@
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-mysql-session": "^3.0.3",
     "express-rate-limit": "^8.6.2",
@@ -26,6 +25,7 @@
     "what": "^0.0.3"
   },
   "devDependencies": {
+    "dotenv": "^17.4.2",
     "prisma": "^7.9.1"
   }
 }
