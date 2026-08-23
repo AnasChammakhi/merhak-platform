@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
-  
 
 // ============================================================
 // USERS
@@ -252,28 +252,28 @@ model ContactMessage {
 // EXPENSES (depenses)
 // ============================================================
 
-model RecurringExpense {
-  id        Int       @id @default(autoincrement())
-  type      String    @db.VarChar(100) // loyer, patente, steg, autre...
-  amount    Decimal   @db.Decimal(10, 2)
-  startDate DateTime  @map("start_date")
-  endDate   DateTime? @map("end_date") // null = toujours actif
+model Expense {
+  id     Int         @id @default(autoincrement())
+  label  String      @db.VarChar(150) // loyer, patente, steg, chaise de bureau...
+  type   ExpenseType // RECURRING or ONE_TIME
+  amount Decimal     @db.Decimal(10, 2)
+
+  date      DateTime? // for ONE_TIME
+  startDate DateTime? @map("start_date") // for RECURRING
+  endDate   DateTime? @map("end_date") // for RECURRING, null = toujours actif
+
+  description String? @db.Text
 
   financeEntries FinanceEntry[]
 
-  @@map("recurring_expenses")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("expenses")
 }
 
-model OneTimeExpense {
-  id          Int      @id @default(autoincrement())
-  type        String   @db.VarChar(100)
-  amount      Decimal  @db.Decimal(10, 2)
-  month       DateTime // 1st of the month it applies to
-  description String?  @db.Text
-
-  financeEntries FinanceEntry[]
-
-  @@map("one_time_expenses")
+enum ExpenseType {
+  RECURRING
+  ONE_TIME
 }
 
 // ============================================================
@@ -281,20 +281,18 @@ model OneTimeExpense {
 // ============================================================
 
 model FinanceEntry {
-  id        Int                @id @default(autoincrement())
-  type      FinanceEntryType
-  direction FinanceDirection // INCOME or EXPENSE
-  amount    Decimal            @db.Decimal(10, 2)
-  date      DateTime           @default(now()) // actual date of the transaction (can be backdated)
+  id          Int              @id @default(autoincrement())
+  type        FinanceEntryType
+  direction   FinanceDirection // INCOME or EXPENSE
+  amount      Decimal          @db.Decimal(10, 2)
+  date        DateTime         @default(now()) // actual date of the transaction (can be backdated)
   description String?          @db.Text
 
   // Optional links back to the source of this entry — only one will be set depending on `type`
-  orderId              Int?              @map("order_id")
-  order                Order?            @relation(fields: [orderId], references: [id])
-  recurringExpenseId   Int?              @map("recurring_expense_id")
-  recurringExpense     RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
-  oneTimeExpenseId     Int?              @map("one_time_expense_id")
-  oneTimeExpense       OneTimeExpense?   @relation(fields: [oneTimeExpenseId], references: [id])
+  orderId   Int?     @map("order_id")
+  order     Order?   @relation(fields: [orderId], references: [id])
+  expenseId Int?     @map("expense_id")
+  expense   Expense? @relation(fields: [expenseId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -302,11 +300,10 @@ model FinanceEntry {
 }
 
 enum FinanceEntryType {
-  SALE           // vente produit standard
-  CUSTOM_ORDER   // vente sur-mesure (prix final)
-  DEPOSIT        // acompte reçu
-  EXPENSE_RECURRING
-  EXPENSE_ONETIME
+  SALE         // vente produit standard
+  CUSTOM_ORDER // vente sur-mesure (prix final)
+  DEPOSIT      // acompte reçu
+  EXPENSE      // sortie liée à une dépense (récurrente ou ponctuelle)
   REFUND
   OTHER
 }
