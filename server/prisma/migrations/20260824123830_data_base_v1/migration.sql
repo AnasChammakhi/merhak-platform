@@ -159,23 +159,16 @@ CREATE TABLE `contact_messages` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `recurring_expenses` (
+CREATE TABLE `expenses` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `type` VARCHAR(100) NOT NULL,
+    `label` VARCHAR(150) NOT NULL,
+    `type` ENUM('RECURRING', 'ONE_TIME') NOT NULL,
     `amount` DECIMAL(10, 2) NOT NULL,
-    `start_date` DATETIME(3) NOT NULL,
+    `date` DATETIME(3) NULL,
+    `start_date` DATETIME(3) NULL,
     `end_date` DATETIME(3) NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `one_time_expenses` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `type` VARCHAR(100) NOT NULL,
-    `amount` DECIMAL(10, 2) NOT NULL,
-    `month` DATETIME(3) NOT NULL,
     `description` TEXT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -183,14 +176,13 @@ CREATE TABLE `one_time_expenses` (
 -- CreateTable
 CREATE TABLE `finance_entries` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `type` ENUM('SALE', 'CUSTOM_ORDER', 'DEPOSIT', 'EXPENSE_RECURRING', 'EXPENSE_ONETIME', 'REFUND', 'OTHER') NOT NULL,
+    `type` ENUM('SALE', 'CUSTOM_ORDER', 'DEPOSIT', 'EXPENSE', 'REFUND', 'OTHER') NOT NULL,
     `direction` ENUM('INCOME', 'EXPENSE') NOT NULL,
     `amount` DECIMAL(10, 2) NOT NULL,
     `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `description` TEXT NULL,
     `order_id` INTEGER NULL,
-    `recurring_expense_id` INTEGER NULL,
-    `one_time_expense_id` INTEGER NULL,
+    `expense_id` INTEGER NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
@@ -233,7 +225,4 @@ ALTER TABLE `custom_order_details` ADD CONSTRAINT `custom_order_details_measurem
 ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_recurring_expense_id_fkey` FOREIGN KEY (`recurring_expense_id`) REFERENCES `recurring_expenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_one_time_expense_id_fkey` FOREIGN KEY (`one_time_expense_id`) REFERENCES `one_time_expenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `finance_entries` ADD CONSTRAINT `finance_entries_expense_id_fkey` FOREIGN KEY (`expense_id`) REFERENCES `expenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
