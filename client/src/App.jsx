@@ -5,6 +5,7 @@ import {
 
 
 import Home from "./pages/Home";
+import Store from "./pages/Store";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import SignIn from "./pages/SignIn";
@@ -29,6 +30,16 @@ function App() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+      <Route
+        path="/store"
+        element={<Store />}
+      />
+
+      <Route
+        path="/boutique"
+        element={<Store />}
       />
 
       <Route
