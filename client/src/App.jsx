@@ -18,6 +18,10 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Clients from "./pages/admin/Clients";
 import ClientDetail from "./pages/admin/ClientDetail";
+import Orders from "./pages/admin/Orders";
+import OrderDetail from "./pages/admin/OrderDetail";
+import CustomOrders from "./pages/admin/CustomOrders";
+import CustomOrderCreate from "./pages/admin/CustomOrderCreate";
 
 
 function App() {
@@ -85,6 +89,41 @@ function App() {
             path="/admin/clients/:id"
             element={
               <ClientDetail />
+            }
+          />
+
+          <Route
+            path="/admin/orders"
+            element={
+              <Orders />
+            }
+          />
+
+          <Route
+            path="/admin/orders/:id"
+            element={
+              <OrderDetail />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders"
+            element={
+              <CustomOrders />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders/new"
+            element={
+              <CustomOrderCreate />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders/:id/edit"
+            element={
+              <CustomOrderCreate />
             }
           />
         </Route>

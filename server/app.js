@@ -22,6 +22,12 @@ const authRoutes =
 const clientRoutes =
   require("./routes/clientRoutes");
 
+const orderRoutes =
+  require("./routes/orderRoutes");
+
+const customOrderRoutes =
+  require("./routes/customOrderRoutes");
+
 const {
   csrfProtection,
 } = require(
@@ -198,6 +204,16 @@ app.use(
 app.use(
   "/api/admin/clients",
   clientRoutes
+);
+
+app.use(
+  "/api/admin/orders",
+  orderRoutes
+);
+
+app.use(
+  "/api/admin/custom-orders",
+  customOrderRoutes
 );
 
 
