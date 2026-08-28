@@ -49,7 +49,7 @@ function AdminSidebar() {
 
 
   return (
-    <aside 
+    <aside
       className="relative flex min-h-screen w-64 shrink-0 flex-col text-white"
       style={{
         backgroundImage: `url(${sidebarBg})`,

@@ -116,7 +116,7 @@ function Orders() {
   function formatPaymentStatus(status) {
     switch (status) {
       case "PAID": return <span className="inline-block rounded-full px-2.5 py-1 text-xs font-medium bg-green-100 text-green-700">Payé</span>;
-      case "DEPOSIT": return <span className="inline-block rounded-full px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-700">Acompte versé</span>;
+      case "DEPOSIT": return <span className="inline-block rounded-full px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-700">Acompte payé</span>;
       default: return <span className="inline-block rounded-full px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700">Non payé</span>;
     }
   }
