@@ -121,6 +121,9 @@ function App() {
             path="/admin/categories"
             element={
               <Categories />
+            }
+            />
+            <Route
             path="/admin/orders"
             element={
               <Orders />
@@ -131,6 +134,9 @@ function App() {
             path="/admin/products"
             element={
               <Products />
+            }
+            />
+          <Route
             path="/admin/orders/:id"
             element={
               <OrderDetail />

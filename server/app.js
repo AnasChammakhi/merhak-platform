@@ -245,6 +245,9 @@ app.use(
 app.use(
   "/api/products",
   productRoutes
+);
+
+app.use(
   "/api/admin/orders",
   orderRoutes
 );
