@@ -28,6 +28,9 @@ const orderRoutes =
 const customOrderRoutes =
   require("./routes/customOrderRoutes");
 
+const calendarRoutes =
+  require("./routes/calendarRoutes");
+
 const {
   csrfProtection,
 } = require(
@@ -214,6 +217,11 @@ app.use(
 app.use(
   "/api/admin/custom-orders",
   customOrderRoutes
+);
+
+app.use(
+  "/api/admin/calendar",
+  calendarRoutes
 );
 
 

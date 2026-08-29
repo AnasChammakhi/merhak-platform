@@ -8,6 +8,7 @@ import {
   UsersIcon,
   ShoppingBagIcon,
   ScissorsIcon,
+  CalendarIcon,
   ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
@@ -137,6 +138,17 @@ function AdminSidebar() {
             <ScissorsIcon className="h-5 w-5" />
 
             Sur-Mesure
+          </NavLink>
+
+          <NavLink
+            to="/admin/calendar"
+            className={
+              menuClass
+            }
+          >
+            <CalendarIcon className="h-5 w-5" />
+
+            Calendrier
           </NavLink>
 
         </nav>

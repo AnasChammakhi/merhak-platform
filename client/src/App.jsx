@@ -22,6 +22,7 @@ import Orders from "./pages/admin/Orders";
 import OrderDetail from "./pages/admin/OrderDetail";
 import CustomOrders from "./pages/admin/CustomOrders";
 import CustomOrderCreate from "./pages/admin/CustomOrderCreate";
+import Calendar from "./pages/admin/Calendar";
 
 
 function App() {
@@ -124,6 +125,13 @@ function App() {
             path="/admin/custom-orders/:id/edit"
             element={
               <CustomOrderCreate />
+            }
+          />
+
+          <Route
+            path="/admin/calendar"
+            element={
+              <Calendar />
             }
           />
         </Route>
