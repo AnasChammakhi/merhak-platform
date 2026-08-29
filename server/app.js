@@ -33,6 +33,14 @@ const productRoutes =
 
 const adminProductRoutes =
   require("./routes/adminProductRoutes");
+const orderRoutes =
+  require("./routes/orderRoutes");
+
+const customOrderRoutes =
+  require("./routes/customOrderRoutes");
+
+const calendarRoutes =
+  require("./routes/calendarRoutes");
 
 const {
   csrfProtection,
@@ -237,6 +245,18 @@ app.use(
 app.use(
   "/api/products",
   productRoutes
+  "/api/admin/orders",
+  orderRoutes
+);
+
+app.use(
+  "/api/admin/custom-orders",
+  customOrderRoutes
+);
+
+app.use(
+  "/api/admin/calendar",
+  calendarRoutes
 );
 
 
