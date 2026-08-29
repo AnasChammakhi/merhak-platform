@@ -39,6 +39,10 @@ function Footer() {
                 Accueil
               </Link>
 
+              <Link to="/store">
+                Boutique
+              </Link>
+
               <Link to="/about">
                 À propos
               </Link>

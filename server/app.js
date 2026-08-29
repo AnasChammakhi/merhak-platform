@@ -13,6 +13,9 @@ const session =
 require("dotenv").config();
 
 
+const path =
+  require("path");
+
 const sessionStore =
   require("./config/sessionStore");
 
@@ -22,6 +25,14 @@ const authRoutes =
 const clientRoutes =
   require("./routes/clientRoutes");
 
+const categoryRoutes =
+  require("./routes/categoryRoutes");
+
+const productRoutes =
+  require("./routes/productRoutes");
+
+const adminProductRoutes =
+  require("./routes/adminProductRoutes");
 const orderRoutes =
   require("./routes/orderRoutes");
 
@@ -63,7 +74,19 @@ app.disable(
 );
 
 app.use(
-  helmet()
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
+
+// Serve static uploaded product images
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "public", "uploads")
+  )
 );
 
 
@@ -210,6 +233,18 @@ app.use(
 );
 
 app.use(
+  "/api/admin/products",
+  adminProductRoutes
+);
+
+app.use(
+  "/api/categories",
+  categoryRoutes
+);
+
+app.use(
+  "/api/products",
+  productRoutes
   "/api/admin/orders",
   orderRoutes
 );

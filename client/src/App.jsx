@@ -5,6 +5,8 @@ import {
 
 
 import Home from "./pages/Home";
+import Store from "./pages/Store";
+import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import SignIn from "./pages/SignIn";
@@ -18,6 +20,8 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Clients from "./pages/admin/Clients";
 import ClientDetail from "./pages/admin/ClientDetail";
+import Categories from "./pages/admin/Categories";
+import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
 import OrderDetail from "./pages/admin/OrderDetail";
 import CustomOrders from "./pages/admin/CustomOrders";
@@ -34,6 +38,26 @@ function App() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+      <Route
+        path="/store"
+        element={<Store />}
+      />
+
+      <Route
+        path="/boutique"
+        element={<Store />}
+      />
+
+      <Route
+        path="/product/:id"
+        element={<ProductDetail />}
+      />
+
+      <Route
+        path="/store/:id"
+        element={<ProductDetail />}
       />
 
       <Route
@@ -94,6 +118,9 @@ function App() {
           />
 
           <Route
+            path="/admin/categories"
+            element={
+              <Categories />
             path="/admin/orders"
             element={
               <Orders />
@@ -101,6 +128,9 @@ function App() {
           />
 
           <Route
+            path="/admin/products"
+            element={
+              <Products />
             path="/admin/orders/:id"
             element={
               <OrderDetail />

@@ -6,10 +6,14 @@ import {
 import {
   Squares2X2Icon,
   UsersIcon,
+  FolderIcon,
+  ShoppingBagIcon,
   ShoppingBagIcon,
   ScissorsIcon,
   CalendarIcon,
   ArrowRightStartOnRectangleIcon,
+  EyeIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 
 
@@ -118,6 +122,31 @@ function AdminSidebar() {
           </NavLink>
 
 
+        <NavLink
+          to="/admin/categories"
+          className={
+            menuClass
+          }
+        >
+          <FolderIcon className="h-5 w-5" />
+
+          Catégories
+        </NavLink>
+
+
+        <NavLink
+          to="/admin/products"
+          className={
+            menuClass
+          }
+        >
+          <ShoppingBagIcon className="h-5 w-5" />
+
+          Produits & Stocks
+        </NavLink>
+
+      </nav>
+
           <NavLink
             to="/admin/orders"
             className={
@@ -126,8 +155,17 @@ function AdminSidebar() {
           >
             <ShoppingBagIcon className="h-5 w-5" />
 
-            Gestion des commandes
-          </NavLink>
+      <div className="border-t border-white/15 p-4 space-y-2">
+
+        <a
+          href="/boutique"
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+        >
+          <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+          Voir la boutique
+        </a>
 
           <NavLink
             to="/admin/custom-orders"
