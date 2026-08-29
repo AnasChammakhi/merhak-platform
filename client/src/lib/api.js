@@ -2,12 +2,33 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000/api";
 
+export const DEFAULT_PRODUCT_IMAGE =
+  "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80";
 
 let csrfToken = null;
 
 
 export function resetCsrfToken() {
   csrfToken = null;
+}
+
+export function getImageUrl(url, fallback = DEFAULT_PRODUCT_IMAGE) {
+  if (!url) return fallback;
+  const normalized = String(url).trim();
+
+  if (!normalized) return fallback;
+  if (normalized.startsWith("http://") || normalized.startsWith("https://") || normalized.startsWith("data:")) {
+    return normalized;
+  }
+
+  const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
+
+  if (cleanPath.startsWith("/assets/") || cleanPath.startsWith("/uploads/")) {
+    return cleanPath;
+  }
+
+  const baseUrl = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+  return `${baseUrl}${cleanPath}`;
 }
 
 

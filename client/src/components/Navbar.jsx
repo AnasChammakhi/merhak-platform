@@ -12,26 +12,27 @@ import {
 
 import logoBlue from "../assets/merhak logo blue simple.png";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../lib/api";
 
-const BOUTIQUE_CATEGORIES = {
-  homme: {
-    title: "Homme",
+const DEFAULT_BOUTIQUE = [
+  {
+    id: "homme",
+    name: "Homme",
     gender: "homme",
     description: "Élégance naturelle & coupes contemporaines",
-    items: [
-      { name: "Toute la collection Homme", category: "" },
+    children: [
       { name: "Chemises en lin & coton", category: "Chemises" },
       { name: "Pantalons & Bermudas", category: "Pantalons" },
       { name: "Vestes & Costumes", category: "Vestes" },
       { name: "Tuniques & Djellabas", category: "Tuniques" },
     ],
   },
-  femme: {
-    title: "Femme",
+  {
+    id: "femme",
+    name: "Femme",
     gender: "femme",
     description: "Lignes fluides & matières nobles",
-    items: [
-      { name: "Toute la collection Femme", category: "" },
+    children: [
       { name: "Robes & Ensembles", category: "Robes" },
       { name: "Chemises & Blouses", category: "Chemises" },
       { name: "Pantalons & Jupes", category: "Pantalons" },
@@ -39,7 +40,7 @@ const BOUTIQUE_CATEGORIES = {
       { name: "Jupes fluides", category: "Jupes" },
     ],
   },
-};
+];
 
 function Navbar() {
   const navigate = useNavigate();
@@ -48,11 +49,38 @@ function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileBoutiqueOpen, setMobileBoutiqueOpen] = useState(true);
-  const [mobileHommeOpen, setMobileHommeOpen] = useState(true);
-  const [mobileFemmeOpen, setMobileFemmeOpen] = useState(true);
+  const [openMobileAccordions, setOpenMobileAccordions] = useState({});
+  const [activeRootCategory, setActiveRootCategory] = useState(null);
+
+  const [categoriesTree, setCategoriesTree] = useState(DEFAULT_BOUTIQUE);
 
   const dropdownRef = useRef(null);
   const timeoutRef = useRef(null);
+
+  // Fetch dynamic categories
+  useEffect(() => {
+    apiFetch("/categories")
+      .then((data) => {
+        if (data.tree && data.tree.length > 0) {
+          const formatted = data.tree.map((root) => ({
+            id: root.id,
+            name: root.name,
+            gender: root.name.toLowerCase(),
+            description: root.description || "Collection MERHAK",
+            children: (root.children || []).map((sub) => ({
+              id: sub.id,
+              name: sub.name,
+              category: sub.name,
+            })),
+          }));
+          setCategoriesTree(formatted);
+          setActiveRootCategory((prev) => prev || formatted[0]?.name || null);
+        }
+      })
+      .catch(() => {
+        setActiveRootCategory((prev) => prev || DEFAULT_BOUTIQUE[0]?.name || null);
+      });
+  }, []);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -87,6 +115,16 @@ function Navbar() {
     if (gender) params.set("gender", gender);
     if (category) params.set("category", category);
     navigate(`/store?${params.toString()}`);
+  };
+
+  const currentRootCategory =
+    categoriesTree.find((root) => root.name === activeRootCategory) || categoriesTree[0] || DEFAULT_BOUTIQUE[0];
+
+  const toggleMobileAccordion = (id) => {
+    setOpenMobileAccordions((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   return (
@@ -128,100 +166,109 @@ function Navbar() {
 
               {/* Mega Dropdown Menu */}
               {dropdownOpen && (
-                <div className="absolute left-1/2 top-full -translate-x-1/2 w-[620px] rounded-3xl border border-[#e5f1f8] bg-white p-6 shadow-2xl shadow-[#0f73c4]/15 ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="grid grid-cols-2 gap-6 divide-x divide-[#f0f6fa]">
-                    {/* HOMME Column */}
-                    <div className="pr-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold uppercase tracking-widest text-[#0f73c4]">
-                            Collection
-                          </span>
-                          <h4 className="text-lg font-bold text-[#10212f]">
-                            Homme
-                          </h4>
-                        </div>
-                        <span className="rounded-full bg-[#eef9ff] px-2.5 py-0.5 text-[11px] font-semibold text-[#0f73c4]">
-                          Atelier
-                        </span>
-                      </div>
-                      <p className="mb-4 text-xs text-[#667785]">
-                        {BOUTIQUE_CATEGORIES.homme.description}
+                <div className="absolute left-1/2 top-full -translate-x-1/2 w-[700px] rounded-3xl border border-[#e5f1f8] bg-white p-6 shadow-2xl shadow-[#0f73c4]/15 ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+                    <div className="rounded-2xl bg-[#f7fbfe] p-3">
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[#0f73c4]">
+                        Catégories racines
                       </p>
-
-                      <ul className="space-y-1.5">
-                        {BOUTIQUE_CATEGORIES.homme.items.map((item, idx) => (
-                          <li key={idx}>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleCategoryClick("homme", item.category)
-                              }
-                              className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-[#10212f] transition hover:bg-[#f7fbfe] hover:text-[#0f73c4]"
-                            >
-                              <span
-                                className={
-                                  idx === 0
-                                    ? "font-semibold text-[#0f73c4]"
-                                    : "font-normal"
-                                }
-                              >
-                                {item.name}
-                              </span>
-                              <ChevronRightIcon className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5 text-[#0f73c4]" />
-                            </button>
-                          </li>
+                      <div className="space-y-2">
+                        {categoriesTree.map((root) => (
+                          <button
+                            key={root.id || root.name}
+                            type="button"
+                            onMouseEnter={() => setActiveRootCategory(root.name)}
+                            onClick={() => {
+                              setActiveRootCategory(root.name);
+                              handleCategoryClick(root.gender || root.name.toLowerCase(), "");
+                            }}
+                            className={`w-full rounded-2xl border px-3 py-2.5 text-left transition ${
+                              activeRootCategory === root.name
+                                ? "border-[#0f73c4] bg-[#eef9ff] text-[#0f73c4] shadow-sm"
+                                : "border-transparent bg-white text-[#10212f] hover:border-[#dcecf6] hover:bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-bold">{root.name}</div>
+                                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#8ca0ad]">
+                                  {root.children?.length || 0} sous-catégories
+                                </div>
+                              </div>
+                              <ChevronRightIcon className="h-4 w-4" />
+                            </div>
+                          </button>
                         ))}
-                      </ul>
+                      </div>
                     </div>
 
-                    {/* FEMME Column */}
-                    <div className="pl-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold uppercase tracking-widest text-[#29b6f6]">
-                            Collection
-                          </span>
-                          <h4 className="text-lg font-bold text-[#10212f]">
-                            Femme
-                          </h4>
-                        </div>
-                        <span className="rounded-full bg-[#f0faff] px-2.5 py-0.5 text-[11px] font-semibold text-[#29b6f6]">
-                          Couture
-                        </span>
-                      </div>
-                      <p className="mb-4 text-xs text-[#667785]">
-                        {BOUTIQUE_CATEGORIES.femme.description}
-                      </p>
-
-                      <ul className="space-y-1.5">
-                        {BOUTIQUE_CATEGORIES.femme.items.map((item, idx) => (
-                          <li key={idx}>
+                    <div className="rounded-2xl border border-[#e5f1f8] bg-[#fff] p-4">
+                      {currentRootCategory && (
+                        <>
+                          <div className="mb-4 flex items-center justify-between gap-4">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-[#0f73c4]">
+                                Collection
+                              </span>
+                              <h4 className="mt-1 text-xl font-bold text-[#10212f]">
+                                {currentRootCategory.name}
+                              </h4>
+                            </div>
                             <button
                               type="button"
                               onClick={() =>
-                                handleCategoryClick("femme", item.category)
+                                handleCategoryClick(
+                                  currentRootCategory.gender || currentRootCategory.name.toLowerCase(),
+                                  ""
+                                )
                               }
-                              className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-[#10212f] transition hover:bg-[#f7fbfe] hover:text-[#0f73c4]"
+                              className="rounded-full bg-[#eef9ff] px-3 py-1.5 text-[11px] font-semibold text-[#0f73c4] hover:bg-[#0f73c4] hover:text-white transition"
                             >
-                              <span
-                                className={
-                                  idx === 0
-                                    ? "font-semibold text-[#0f73c4]"
-                                    : "font-normal"
-                                }
-                              >
-                                {item.name}
-                              </span>
-                              <ChevronRightIcon className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5 text-[#0f73c4]" />
+                              Tout voir
                             </button>
-                          </li>
-                        ))}
-                      </ul>
+                          </div>
+
+                          <p className="mb-4 text-xs text-[#667785]">
+                            {currentRootCategory.description}
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+                            {currentRootCategory.children && currentRootCategory.children.length > 0 ? (
+                              currentRootCategory.children.map((sub, index) => (
+                                <button
+                                  key={sub.id || `${currentRootCategory.name}-${sub.name}-${index}`}
+                                  type="button"
+                                  onClick={() =>
+                                    handleCategoryClick(
+                                      currentRootCategory.gender || currentRootCategory.name.toLowerCase(),
+                                      sub.category || sub.name
+                                    )
+                                  }
+                                  className="rounded-full border border-[#dcecf6] bg-[#f7fbfe] px-3 py-1.5 text-xs font-medium text-[#10212f] transition hover:border-[#0f73c4] hover:bg-[#eef9ff] hover:text-[#0f73c4]"
+                                >
+                                  {sub.name}
+                                </button>
+                              ))
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCategoryClick(
+                                    currentRootCategory.gender || currentRootCategory.name.toLowerCase(),
+                                    ""
+                                  )
+                                }
+                                className="rounded-full border border-[#dcecf6] bg-[#f7fbfe] px-3 py-1.5 text-xs font-medium text-[#10212f]"
+                              >
+                                Voir toute la collection
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Bottom Bar */}
                   <div className="mt-5 border-t border-[#f0f6fa] pt-4">
                     <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#eef9ff] to-[#f7fbfe] p-3 text-xs">
                       <div className="flex items-center gap-2 text-[#0f73c4] font-medium">
@@ -233,7 +280,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="font-semibold text-[#0f73c4] hover:underline"
                       >
-                        Demander un devis &rarr;
+                        Demander du sur-mesure &rarr;
                       </Link>
                     </div>
                   </div>
@@ -314,7 +361,7 @@ function Navbar() {
                 Accueil
               </Link>
 
-              {/* Mobile Boutique Dropdown / Accordion */}
+              {/* Mobile Boutique Accordion */}
               <div className="rounded-2xl border border-[#e5f1f8] bg-[#f7fbfe] p-3">
                 <button
                   type="button"
@@ -339,69 +386,58 @@ function Navbar() {
                       → Voir tous les articles
                     </Link>
 
-                    {/* Mobile Homme */}
-                    <div className="rounded-xl bg-white p-3 border border-[#e5f1f8]">
-                      <button
-                        type="button"
-                        onClick={() => setMobileHommeOpen(!mobileHommeOpen)}
-                        className="flex w-full items-center justify-between text-sm font-semibold text-[#10212f]"
-                      >
-                        <span>Homme</span>
-                        <ChevronDownIcon
-                          className={`h-3.5 w-3.5 text-[#8ca0ad] transition-transform ${
-                            mobileHommeOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                      {mobileHommeOpen && (
-                        <div className="mt-2 space-y-1.5 pl-2 border-l border-[#eef9ff]">
-                          {BOUTIQUE_CATEGORIES.homme.items.map((item, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() =>
-                                handleCategoryClick("homme", item.category)
-                              }
-                              className="block w-full text-left text-xs text-[#667785] hover:text-[#0f73c4] py-1"
-                            >
-                              {item.name}
-                            </button>
-                          ))}
+                    {/* Dynamic Sections */}
+                    {categoriesTree.map((root) => {
+                      const isOpen = openMobileAccordions[root.id] !== false;
+                      return (
+                        <div
+                          key={root.id}
+                          className="rounded-xl bg-white p-3 border border-[#e5f1f8]"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleMobileAccordion(root.id)}
+                            className="flex w-full items-center justify-between text-sm font-semibold text-[#10212f]"
+                          >
+                            <span>{root.name}</span>
+                            <ChevronDownIcon
+                              className={`h-3.5 w-3.5 text-[#8ca0ad] transition-transform ${
+                                isOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+                          {isOpen && (
+                            <div className="mt-2 space-y-1.5 pl-2 border-l border-[#eef9ff]">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCategoryClick(root.gender || root.name.toLowerCase(), "")
+                                }
+                                className="block w-full text-left text-xs font-medium text-[#0f73c4] py-1"
+                              >
+                                Toute la collection {root.name}
+                              </button>
+                              {root.children &&
+                                root.children.map((sub) => (
+                                  <button
+                                    key={sub.id || sub.name}
+                                    type="button"
+                                    onClick={() =>
+                                      handleCategoryClick(
+                                        root.gender || root.name.toLowerCase(),
+                                        sub.category || sub.name
+                                      )
+                                    }
+                                    className="block w-full text-left text-xs text-[#667785] hover:text-[#0f73c4] py-1"
+                                  >
+                                    {sub.name}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    {/* Mobile Femme */}
-                    <div className="rounded-xl bg-white p-3 border border-[#e5f1f8]">
-                      <button
-                        type="button"
-                        onClick={() => setMobileFemmeOpen(!mobileFemmeOpen)}
-                        className="flex w-full items-center justify-between text-sm font-semibold text-[#10212f]"
-                      >
-                        <span>Femme</span>
-                        <ChevronDownIcon
-                          className={`h-3.5 w-3.5 text-[#8ca0ad] transition-transform ${
-                            mobileFemmeOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                      {mobileFemmeOpen && (
-                        <div className="mt-2 space-y-1.5 pl-2 border-l border-[#eef9ff]">
-                          {BOUTIQUE_CATEGORIES.femme.items.map((item, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() =>
-                                handleCategoryClick("femme", item.category)
-                              }
-                              className="block w-full text-left text-xs text-[#667785] hover:text-[#0f73c4] py-1"
-                            >
-                              {item.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

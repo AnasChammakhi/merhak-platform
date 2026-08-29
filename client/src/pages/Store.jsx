@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ShoppingBagIcon,
@@ -13,128 +13,9 @@ import {
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { apiFetch } from "../lib/api";
+import { apiFetch, getImageUrl, DEFAULT_PRODUCT_IMAGE } from "../lib/api";
 
-const ALL_PRODUCTS = [
-  {
-    id: 1,
-    name: "Chemise Col Officier en Lin Pur",
-    gender: "homme",
-    category: "Chemises",
-    price: 145.0,
-    fabric: "100% Lin naturel",
-    image:
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80",
-    description: "Chemise homme à col mao en lin premium lavé, coupe décontractée.",
-    badge: "Best-seller",
-  },
-  {
-    id: 2,
-    name: "Pantalon Coupe Droite en Lin & Coton",
-    gender: "homme",
-    category: "Pantalons",
-    price: 180.0,
-    fabric: "Mélange Lin & Coton",
-    image:
-      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80",
-    description: "Tombé fluide, taille avec cordon de serrage intérieur et poches italiennes.",
-    badge: "Nouveau",
-  },
-  {
-    id: 3,
-    name: "Veste Saharienne en Lin Épais",
-    gender: "homme",
-    category: "Vestes",
-    price: 290.0,
-    fabric: "100% Lin lourd",
-    image:
-      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
-    description: "Veste d'atelier non doublée, 4 poches plaquées à rabat, idéale mi-saison.",
-    badge: "Atelier",
-  },
-  {
-    id: 4,
-    name: "Tunique Gandoura Contemporaine",
-    gender: "homme",
-    category: "Tuniques",
-    price: 160.0,
-    fabric: "Coton peigné & Lin",
-    image:
-      "https://images.unsplash.com/photo-1589310243389-96a5483213a8?auto=format&fit=crop&w=800&q=80",
-    description: "Coupe sobre et aérée, finitions coutures ton sur ton faites à la main.",
-  },
-  {
-    id: 5,
-    name: "Robe Longue Drapée en Lin & Soie",
-    gender: "femme",
-    category: "Robes",
-    price: 260.0,
-    fabric: "Soie & Lin",
-    image:
-      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80",
-    description: "Drapé vaporeux et silhouette sculptée, confectionnée dans notre atelier.",
-    badge: "Exclusif",
-  },
-  {
-    id: 6,
-    name: "Chemisier Fluide en Coton Satiné",
-    gender: "femme",
-    category: "Chemises",
-    price: 155.0,
-    fabric: "100% Coton peigné",
-    image:
-      "https://images.unsplash.com/photo-1551803091-e20673f15770?auto=format&fit=crop&w=800&q=80",
-    description: "Blouse élégante à manches raglan et boutons en nacre véritable.",
-  },
-  {
-    id: 7,
-    name: "Jupe Midi Évasée en Lin Pur",
-    gender: "femme",
-    category: "Jupes",
-    price: 165.0,
-    fabric: "100% Lin naturel",
-    image:
-      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=800&q=80",
-    description: "Jupe à taille élastiquée et poches invisibles latérales, mouvement gracieux.",
-  },
-  {
-    id: 8,
-    name: "Veste Kimono d'Été en Lin",
-    gender: "femme",
-    category: "Vestes",
-    price: 230.0,
-    fabric: "Lin biologique",
-    image:
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80",
-    description: "Veste kimono ceinturée à la taille, tombé structuré et moderne.",
-    badge: "Coup de cœur",
-  },
-  {
-    id: 9,
-    name: "Pantalon Palazzo Évasé",
-    gender: "femme",
-    category: "Pantalons",
-    price: 195.0,
-    fabric: "Mélange Lin & Soie",
-    image:
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80",
-    description: "Jambe large ultra-fluide pour une allure élancée et raffinée.",
-  },
-  {
-    id: 10,
-    name: "Costume 2 Pièces en Lin d'Atelier",
-    gender: "homme",
-    category: "Vestes",
-    price: 420.0,
-    fabric: "100% Lin pur tissé",
-    image:
-      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80",
-    description: "Veste tailleur déstructurée avec son pantalon assorti, sur-mesure disponible.",
-    badge: "Sur-Mesure",
-  },
-];
-
-const CATEGORIES_LIST = [
+const DEFAULT_CATEGORIES = [
   "Toutes les catégories",
   "Chemises",
   "Pantalons",
@@ -155,7 +36,9 @@ const FABRICS_LIST = [
 function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [products, setProducts] = useState(ALL_PRODUCTS);
+  const [products, setProducts] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
+  const [dbTree, setDbTree] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGender, setSelectedGender] = useState(
     searchParams.get("gender") || "all"
@@ -186,27 +69,73 @@ function Store() {
     }
   }, [searchParams]);
 
-  // Optionally fetch dynamic products from API
+  // Load dynamic categories from backend
   useEffect(() => {
+    apiFetch("/categories")
+      .then((data) => {
+        if (data.categories && data.categories.length > 0) {
+          setDbCategories(data.categories);
+          setDbTree(data.tree || []);
+        }
+      })
+      .catch(() => {});
+
     apiFetch("/products")
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setProducts(data);
         }
       })
-      .catch(() => {
-        // Fall back to sample products
-      });
+      .catch(() => {});
   }, []);
+
+  // Compute dynamic category options based on selected gender / collection
+  const categoriesList = useMemo(() => {
+    if (dbCategories.length === 0) return DEFAULT_CATEGORIES;
+
+    if (selectedGender !== "all") {
+      const parent = dbTree.find(
+        (r) => r.name.toLowerCase() === selectedGender.toLowerCase()
+      );
+      if (parent && parent.children && parent.children.length > 0) {
+        return ["Toutes les catégories", ...parent.children.map((c) => c.name)];
+      }
+    }
+
+    // Subcategories or all unique category names
+    const subcats = dbCategories
+      .filter((c) => c.parent_id !== null)
+      .map((c) => c.name);
+    const unique = Array.from(new Set(subcats));
+    return unique.length > 0 ? ["Toutes les catégories", ...unique] : DEFAULT_CATEGORIES;
+  }, [dbCategories, dbTree, selectedGender]);
+
+  // Available Genders from DB roots or fallback
+  const availableGenders = useMemo(() => {
+    if (dbTree.length > 0) {
+      const roots = dbTree.map((r) => ({
+        id: r.name.toLowerCase(),
+        label: r.name,
+      }));
+      return [{ id: "all", label: "Tous" }, ...roots];
+    }
+    return [
+      { id: "all", label: "Tous" },
+      { id: "homme", label: "Homme" },
+      { id: "femme", label: "Femme" },
+    ];
+  }, [dbTree]);
 
   const updateGender = (gender) => {
     setSelectedGender(gender);
+    setSelectedCategory("Toutes les catégories"); // Reset subcategory when switching gender
     const newParams = new URLSearchParams(searchParams);
     if (gender === "all") {
       newParams.delete("gender");
     } else {
       newParams.set("gender", gender);
     }
+    newParams.delete("category");
     setSearchParams(newParams);
   };
 
@@ -220,6 +149,26 @@ function Store() {
     }
     setSearchParams(newParams);
   };
+
+  const visibleRootCategories = useMemo(() => {
+    if (dbTree.length > 0) {
+      return dbTree.map((root) => ({
+        id: root.id,
+        name: root.name,
+        childNames: (root.children || []).map((child) => child.name),
+      }));
+    }
+
+    return [
+      { id: "homme", name: "Homme", childNames: ["Chemises", "Pantalons", "Vestes", "Tuniques"] },
+      { id: "femme", name: "Femme", childNames: ["Robes", "Chemises", "Pantalons", "Jupes"] },
+    ];
+  }, [dbTree]);
+
+  const currentRootCategories =
+    selectedGender === "all"
+      ? visibleRootCategories
+      : visibleRootCategories.filter((root) => root.name.toLowerCase() === selectedGender.toLowerCase());
 
   const resetFilters = () => {
     setSelectedGender("all");
@@ -247,7 +196,8 @@ function Store() {
 
       const matchesCategory =
         selectedCategory === "Toutes les catégories" ||
-        product.category.toLowerCase() === selectedCategory.toLowerCase();
+        (product.category &&
+          product.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
       const matchesFabric =
         selectedFabric === "Toutes les matières" ||
@@ -280,16 +230,18 @@ function Store() {
     });
 
   // Calculate dynamic counts for sidebar
-  const getGenderCount = (g) => {
-    if (g === "all") return products.length;
-    return products.filter((p) => p.gender === g).length;
-  };
-
   const getCategoryCount = (cat) => {
-    if (cat === "Toutes les catégories") return products.length;
+    if (cat === "Toutes les catégories") {
+      if (selectedGender === "all") return products.length;
+      return products.filter((p) => p.gender === selectedGender).length;
+    }
     return products.filter((p) => {
       const matchG = selectedGender === "all" || p.gender === selectedGender;
-      return matchG && p.category.toLowerCase() === cat.toLowerCase();
+      return (
+        matchG &&
+        p.category &&
+        p.category.toLowerCase().includes(cat.toLowerCase())
+      );
     }).length;
   };
 
@@ -343,6 +295,7 @@ function Store() {
               Matières naturelles sélectionnées, coupes fluides et finitions faites pour durer.
             </p>
           </div>
+
         </div>
       </section>
 
@@ -390,17 +343,17 @@ function Store() {
                 )}
               </div>
 
-              {/* GENDER FILTER */}
+              {/* GENDER / ROOT COLLECTIONS FILTER */}
               <div>
                 <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[#667785]">
-                  Univers / Genre
+                  Univers / Collection
                 </p>
-                <div className="grid grid-cols-3 gap-1.5 rounded-2xl bg-white p-1 border border-[#e5f1f8]">
-                  {[
-                    { id: "all", label: "Tous" },
-                    { id: "homme", label: "Homme" },
-                    { id: "femme", label: "Femme" },
-                  ].map((g) => (
+                <div
+                  className={`grid gap-1.5 rounded-2xl bg-white p-1 border border-[#e5f1f8] ${
+                    availableGenders.length <= 3 ? "grid-cols-3" : "grid-cols-2"
+                  }`}
+                >
+                  {availableGenders.map((g) => (
                     <button
                       key={g.id}
                       type="button"
@@ -423,7 +376,7 @@ function Store() {
                   Catégories
                 </p>
                 <ul className="space-y-1">
-                  {CATEGORIES_LIST.map((cat) => {
+                  {categoriesList.map((cat) => {
                     const count = getCategoryCount(cat);
                     const isSelected = selectedCategory === cat;
                     return (
@@ -505,16 +458,16 @@ function Store() {
               <div className="rounded-2xl border border-[#dcecf6] bg-gradient-to-br from-white to-[#eef9ff] p-4 text-center">
                 <SparklesIcon className="mx-auto h-6 w-6 text-[#0f73c4]" />
                 <h4 className="mt-2 text-xs font-bold uppercase tracking-wider text-[#10212f]">
-                  Besoin d'une taille spéciale ?
+                  Besoin d'une coupe spéciale ?
                 </h4>
                 <p className="mt-1 text-xs text-[#667785]">
-                  Nous confectionnons la pièce de votre choix à vos mesures.
+                  Nous adaptons chaque modèle à vos mensurations exactes.
                 </p>
                 <Link
                   to="/contact"
                   className="mt-3 inline-block w-full rounded-xl bg-[#0f73c4] py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#29b6f6]"
                 >
-                  Contacter l'atelier
+                  Demander du sur-mesure
                 </Link>
               </div>
             </div>
@@ -524,49 +477,44 @@ function Store() {
           {/* RIGHT PRODUCTS SECTION */}
           {/* ============================================================ */}
           <section className="lg:col-span-9">
-            {/* Top Toolbar */}
-            <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-[#e5f1f8] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-              {/* Search Bar */}
-              <div className="relative flex-1">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8ca0ad]" />
-                <input
-                  type="text"
-                  placeholder="Rechercher une chemise, un pantalon, un tissu..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-full border border-[#e5f1f8] bg-[#f7fbfe] py-2.5 pl-10 pr-4 text-xs text-[#10212f] placeholder-[#8ca0ad] outline-none transition focus:border-[#29b6f6] focus:bg-white"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca0ad] hover:text-[#10212f]"
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                )}
+            <div className="mb-6 flex items-center justify-between rounded-3xl border border-[#e5f1f8] bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="relative w-full max-w-md">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8ca0ad]" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher dans la boutique..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-full border border-[#e5f1f8] bg-[#f7fbfe] py-2.5 pl-10 pr-10 text-xs text-[#10212f] placeholder-[#8ca0ad] outline-none transition focus:border-[#29b6f6] focus:bg-white"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca0ad] hover:text-[#10212f]"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Sort & Count */}
-              <div className="flex items-center justify-between gap-4 sm:justify-end">
+              <div className="flex items-center gap-3">
                 <span className="hidden text-xs text-[#8ca0ad] md:inline">
-                  <strong className="text-[#10212f] font-semibold">
-                    {filteredProducts.length}
-                  </strong>{" "}
+                  <strong className="text-[#10212f] font-semibold">{filteredProducts.length}</strong>{" "}
                   pièce{filteredProducts.length > 1 ? "s" : ""}
                 </span>
 
-                <div className="flex items-center gap-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="rounded-full border border-[#e5f1f8] bg-[#f7fbfe] px-4 py-2.5 text-xs font-medium text-[#10212f] outline-none transition focus:border-[#29b6f6]"
-                  >
-                    <option value="default">Tri: Sélection</option>
-                    <option value="price-asc">Prix: Croissant</option>
-                    <option value="price-desc">Prix: Décroissant</option>
-                    <option value="name-asc">Nom: A &rarr; Z</option>
-                  </select>
-                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-full border border-[#e5f1f8] bg-[#f7fbfe] px-4 py-2.5 text-xs font-medium text-[#10212f] outline-none transition focus:border-[#29b6f6]"
+                >
+                  <option value="default">Tri: Sélection</option>
+                  <option value="price-asc">Prix: Croissant</option>
+                  <option value="price-desc">Prix: Décroissant</option>
+                  <option value="name-asc">Nom: A &rarr; Z</option>
+                </select>
               </div>
             </div>
 
@@ -658,11 +606,17 @@ function Store() {
                     key={product.id}
                     className="group flex flex-col overflow-hidden rounded-3xl border border-[#e5f1f8] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#29b6f6]/40 hover:shadow-xl hover:shadow-[#0f73c4]/5"
                   >
-                    {/* Product Image */}
-                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#f7fbfe]">
+                    {/* Product Image Clickable */}
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="relative aspect-[4/5] w-full overflow-hidden bg-[#f7fbfe] block"
+                    >
                       <img
-                        src={product.image}
+                        src={getImageUrl(product.image || product.images?.[0])}
                         alt={product.name}
+                        onError={(event) => {
+                          event.currentTarget.src = DEFAULT_PRODUCT_IMAGE;
+                        }}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
 
@@ -683,7 +637,7 @@ function Store() {
                           {product.fabric}
                         </span>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Details */}
                     <div className="flex flex-1 flex-col p-5">
@@ -691,9 +645,14 @@ function Store() {
                         {product.category}
                       </div>
 
-                      <h3 className="text-base font-semibold text-[#10212f]">
-                        {product.name}
-                      </h3>
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="transition hover:text-[#0f73c4]"
+                      >
+                        <h3 className="text-base font-semibold text-[#10212f]">
+                          {product.name}
+                        </h3>
+                      </Link>
 
                       <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-[#667785]">
                         {product.description}
@@ -705,7 +664,7 @@ function Store() {
                             Prix
                           </span>
                           <p className="text-lg font-bold text-[#10212f]">
-                            {product.price.toFixed(2)}{" "}
+                            {Number(product.price).toFixed(2)}{" "}
                             <span className="text-xs font-normal text-[#667785]">
                               TND
                             </span>
@@ -713,11 +672,11 @@ function Store() {
                         </div>
 
                         <Link
-                          to="/contact"
+                          to={`/product/${product.id}`}
                           className="inline-flex items-center gap-1 rounded-full bg-[#eef9ff] px-4 py-2 text-xs font-semibold text-[#0f73c4] transition hover:bg-[#0f73c4] hover:text-white"
                         >
                           <SparklesIcon className="h-3.5 w-3.5" />
-                          Commander
+                          Voir la pièce
                         </Link>
                       </div>
                     </div>
@@ -749,21 +708,25 @@ function Store() {
               {/* Gender */}
               <div>
                 <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[#667785]">
-                  Genre
+                  Collection
                 </p>
-                <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#f7fbfe] p-1 border border-[#e5f1f8]">
-                  {["all", "homme", "femme"].map((g) => (
+                <div
+                  className={`grid gap-1 rounded-xl bg-[#f7fbfe] p-1 border border-[#e5f1f8] ${
+                    availableGenders.length <= 3 ? "grid-cols-3" : "grid-cols-2"
+                  }`}
+                >
+                  {availableGenders.map((g) => (
                     <button
-                      key={g}
+                      key={g.id}
                       type="button"
-                      onClick={() => updateGender(g)}
+                      onClick={() => updateGender(g.id)}
                       className={`rounded-lg py-1.5 text-xs font-semibold capitalize ${
-                        selectedGender === g
+                        selectedGender === g.id
                           ? "bg-[#0f73c4] text-white"
                           : "text-[#667785]"
                       }`}
                     >
-                      {g === "all" ? "Tous" : g}
+                      {g.label}
                     </button>
                   ))}
                 </div>
@@ -775,7 +738,7 @@ function Store() {
                   Catégories
                 </p>
                 <div className="space-y-1">
-                  {CATEGORIES_LIST.map((cat) => (
+                  {categoriesList.map((cat) => (
                     <button
                       key={cat}
                       type="button"
