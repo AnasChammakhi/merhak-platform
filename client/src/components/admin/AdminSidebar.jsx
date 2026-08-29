@@ -8,160 +8,113 @@ import {
   UsersIcon,
   FolderIcon,
   ShoppingBagIcon,
+  ScissorsIcon,
+  CalendarIcon,
   ArrowRightStartOnRectangleIcon,
-  EyeIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 
-
 import logoWhite from "../../assets/merhak logo white simple.png";
-
-import {
-  useAuth,
-} from "../../context/AuthContext";
-
+import sidebarBg from "../../assets/adminSideBarBg.jpg";
+import { useAuth } from "../../context/AuthContext";
 
 function AdminSidebar() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const {
-    user,
-    logout,
-  } = useAuth();
-
-
-  const menuClass = ({
-    isActive,
-  }) =>
+  const menuClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-      isActive
-        ? "bg-white text-[#0f73c4]"
-        : "text-white/70 hover:bg-white/10 hover:text-white"
+      isActive ? "bg-white text-[#0f73c4]" : "text-white/70 hover:bg-white/10 hover:text-white"
     }`;
-
 
   async function handleLogout() {
     await logout();
-
-    navigate(
-      "/signin"
-    );
+    navigate("/signin");
   }
 
-
   return (
-    <aside className="flex min-h-screen w-64 shrink-0 flex-col bg-[#0f73c4] text-white">
+    <aside
+      className="relative flex min-h-screen w-64 shrink-0 flex-col text-white"
+      style={{
+        backgroundImage: `url(${sidebarBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "right",
+      }}
+    >
+      <div className="absolute inset-0 bg-[#0f73c4]/60" />
 
-      <div className="border-b border-white/15 px-7 py-7">
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="border-b border-white/15 px-7 py-7">
+          <img src={logoWhite} alt="MERHAK" className="h-10 w-auto" />
+          <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
+            Administration
+          </p>
+        </div>
 
-        <img
-          src={logoWhite}
-          alt="MERHAK"
-          className="h-10 w-auto"
-        />
+        <div className="border-b border-white/10 px-6 py-5">
+          <p className="text-xs text-white/50">Connecté en tant que</p>
+          <p className="mt-1 text-sm font-medium">{user?.name}</p>
+        </div>
 
-        <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
-          Administration
-        </p>
+        <nav className="flex-1 space-y-2 p-4">
+          <NavLink to="/admin" end className={menuClass}>
+            <Squares2X2Icon className="h-5 w-5" />
+            Tableau de bord
+          </NavLink>
 
+          <NavLink to="/admin/clients" className={menuClass}>
+            <UsersIcon className="h-5 w-5" />
+            Gestion des clients
+          </NavLink>
+
+          <NavLink to="/admin/categories" className={menuClass}>
+            <FolderIcon className="h-5 w-5" />
+            Catégories
+          </NavLink>
+
+          <NavLink to="/admin/products" className={menuClass}>
+            <ShoppingBagIcon className="h-5 w-5" />
+            Produits & Stocks
+          </NavLink>
+
+          <NavLink to="/admin/orders" className={menuClass}>
+            <ShoppingBagIcon className="h-5 w-5" />
+            Commandes
+          </NavLink>
+
+          <NavLink to="/admin/custom-orders" className={menuClass}>
+            <ScissorsIcon className="h-5 w-5" />
+            Sur-Mesure
+          </NavLink>
+
+          <NavLink to="/admin/calendar" className={menuClass}>
+            <CalendarIcon className="h-5 w-5" />
+            Calendrier
+          </NavLink>
+        </nav>
+
+        <div className="border-t border-white/15 p-4 space-y-2">
+          <a
+            href="/boutique"
+            target="_blank"
+            rel="noreferrer"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+          >
+            <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+            Voir la boutique
+          </a>
+
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+          >
+            <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
+            Déconnexion
+          </button>
+        </div>
       </div>
-
-
-      <div className="border-b border-white/10 px-6 py-5">
-
-        <p className="text-xs text-white/50">
-          Connecté en tant que
-        </p>
-
-        <p className="mt-1 text-sm font-medium">
-          {user?.name}
-        </p>
-
-      </div>
-
-
-      <nav className="flex-1 space-y-2 p-4">
-
-        <NavLink
-          to="/admin"
-          end
-          className={
-            menuClass
-          }
-        >
-          <Squares2X2Icon className="h-5 w-5" />
-
-          Tableau de bord
-        </NavLink>
-
-
-        <NavLink
-          to="/admin/clients"
-          className={
-            menuClass
-          }
-        >
-          <UsersIcon className="h-5 w-5" />
-
-          Gestion des clients
-        </NavLink>
-
-
-        <NavLink
-          to="/admin/categories"
-          className={
-            menuClass
-          }
-        >
-          <FolderIcon className="h-5 w-5" />
-
-          Catégories
-        </NavLink>
-
-
-        <NavLink
-          to="/admin/products"
-          className={
-            menuClass
-          }
-        >
-          <ShoppingBagIcon className="h-5 w-5" />
-
-          Produits & Stocks
-        </NavLink>
-
-      </nav>
-
-
-      <div className="border-t border-white/15 p-4 space-y-2">
-
-        <a
-          href="/boutique"
-          target="_blank"
-          rel="noreferrer"
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-        >
-          <ArrowTopRightOnSquareIcon className="h-5 w-5" />
-          Voir la boutique
-        </a>
-
-        <button
-          onClick={
-            handleLogout
-          }
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-        >
-          <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
-
-          Déconnexion
-        </button>
-
-      </div>
-
     </aside>
   );
 }
-
 
 export default AdminSidebar;

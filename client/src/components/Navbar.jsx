@@ -202,7 +202,7 @@ function Navbar() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-[#e5f1f8] bg-[#fff] p-4">
+                    <div className="rounded-2xl border border-[#e5f1f8] bg-white p-4">
                       {currentRootCategory && (
                         <>
                           <div className="mb-4 flex items-center justify-between gap-4">
@@ -270,7 +270,7 @@ function Navbar() {
                   </div>
 
                   <div className="mt-5 border-t border-[#f0f6fa] pt-4">
-                    <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#eef9ff] to-[#f7fbfe] p-3 text-xs">
+                    <div className="flex items-center justify-between rounded-2xl bg-linear-to-r from-[#eef9ff] to-[#f7fbfe] p-3 text-xs">
                       <div className="flex items-center gap-2 text-[#0f73c4] font-medium">
                         <SparklesIcon className="h-4 w-4" />
                         <span>Création 100% personnalisée sur vos mesures</span>

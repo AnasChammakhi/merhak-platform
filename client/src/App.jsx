@@ -22,6 +22,11 @@ import Clients from "./pages/admin/Clients";
 import ClientDetail from "./pages/admin/ClientDetail";
 import Categories from "./pages/admin/Categories";
 import Products from "./pages/admin/Products";
+import Orders from "./pages/admin/Orders";
+import OrderDetail from "./pages/admin/OrderDetail";
+import CustomOrders from "./pages/admin/CustomOrders";
+import CustomOrderCreate from "./pages/admin/CustomOrderCreate";
+import Calendar from "./pages/admin/Calendar";
 
 
 function App() {
@@ -117,12 +122,52 @@ function App() {
             element={
               <Categories />
             }
+            />
+            <Route
+            path="/admin/orders"
+            element={
+              <Orders />
+            }
           />
 
           <Route
             path="/admin/products"
             element={
               <Products />
+            }
+            />
+          <Route
+            path="/admin/orders/:id"
+            element={
+              <OrderDetail />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders"
+            element={
+              <CustomOrders />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders/new"
+            element={
+              <CustomOrderCreate />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders/:id/edit"
+            element={
+              <CustomOrderCreate />
+            }
+          />
+
+          <Route
+            path="/admin/calendar"
+            element={
+              <Calendar />
             }
           />
         </Route>

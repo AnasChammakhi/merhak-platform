@@ -231,17 +231,22 @@ function Store() {
 
   // Calculate dynamic counts for sidebar
   const getCategoryCount = (cat) => {
+    const normalizedGender = String(selectedGender || "all").toLowerCase().trim();
+    const normalizedCat = String(cat || "").toLowerCase().trim();
+
     if (cat === "Toutes les catégories") {
-      if (selectedGender === "all") return products.length;
-      return products.filter((p) => p.gender === selectedGender).length;
+      if (normalizedGender === "all") return products.length;
+      return products.filter((p) => {
+        const productGender = String(p.gender || "").toLowerCase().trim();
+        return productGender === normalizedGender;
+      }).length;
     }
+
     return products.filter((p) => {
-      const matchG = selectedGender === "all" || p.gender === selectedGender;
-      return (
-        matchG &&
-        p.category &&
-        p.category.toLowerCase().includes(cat.toLowerCase())
-      );
+      const productGender = String(p.gender || "").toLowerCase().trim();
+      const categoryName = String(p.category || "").toLowerCase();
+      const matchG = normalizedGender === "all" || productGender === normalizedGender;
+      return matchG && categoryName.includes(normalizedCat);
     }).length;
   };
 
@@ -455,7 +460,7 @@ function Store() {
               </div>
 
               {/* Bespoke Callout */}
-              <div className="rounded-2xl border border-[#dcecf6] bg-gradient-to-br from-white to-[#eef9ff] p-4 text-center">
+              <div className="rounded-2xl border border-[#dcecf6] bg-linear-to-br from-white to-[#eef9ff] p-4 text-center">
                 <SparklesIcon className="mx-auto h-6 w-6 text-[#0f73c4]" />
                 <h4 className="mt-2 text-xs font-bold uppercase tracking-wider text-[#10212f]">
                   Besoin d'une coupe spéciale ?
@@ -609,7 +614,7 @@ function Store() {
                     {/* Product Image Clickable */}
                     <Link
                       to={`/product/${product.id}`}
-                      className="relative aspect-[4/5] w-full overflow-hidden bg-[#f7fbfe] block"
+                      className="relative aspect-4/5 w-full overflow-hidden bg-[#f7fbfe] block"
                     >
                       <img
                         src={getImageUrl(product.image || product.images?.[0])}
