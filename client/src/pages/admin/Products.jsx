@@ -21,6 +21,15 @@ import {
 
 import { apiFetch, getImageUrl } from "../../lib/api";
 
+const createDefaultVariant = () => ({
+  id: null,
+  size: "M",
+  color: "Naturel",
+  stock: "0",
+  extraPrice: "0",
+  sku: "",
+});
+
 const emptyForm = {
   name: "",
   categoryId: "",
@@ -33,6 +42,8 @@ const emptyForm = {
   stock: "10",
   active: true,
   images: [],
+  sizes: ["M"],
+  colors: ["Naturel"],
   variants: [],
 };
 
@@ -128,15 +139,32 @@ function Products() {
       ...emptyForm,
       categoryId: categories[0]?.id ? String(categories[0].id) : "",
       images: [],
+      sizes: ["M"],
+      colors: ["Naturel"],
+      variants: [],
     });
     setActiveTab("general");
     setImageUrlInput("");
     setModalOpen(true);
   }
 
+  function getUniqueValuesFromVariants(variants, field, fallback) {
+    if (!Array.isArray(variants) || variants.length === 0) return [fallback];
+
+    const values = variants
+      .map((variant) => variant?.[field])
+      .filter((value) => typeof value === "string" && value.trim())
+      .map((value) => value.trim());
+
+    return values.length > 0 ? [...new Set(values)] : [fallback];
+  }
+
   // Open Edit Modal
   function handleOpenEdit(product) {
     setEditingProduct(product);
+    const sizeOptions = getUniqueValuesFromVariants(product.variants, "size", "M");
+    const colorOptions = getUniqueValuesFromVariants(product.variants, "color", "Naturel");
+
     setFormData({
       name: product.name || "",
       categoryId: product.category_id ? String(product.category_id) : "",
@@ -151,7 +179,16 @@ function Products() {
       stock: product.stock !== undefined ? String(product.stock) : "10",
       active: Boolean(product.active),
       images: product.images ? product.images.map((img) => img.url || img) : [],
-      variants: product.variants || [],
+      sizes: sizeOptions,
+      colors: colorOptions,
+      variants: Array.isArray(product.variants) ? product.variants.map((variant) => ({
+        id: variant.id ?? null,
+        size: variant.size || "M",
+        color: variant.color || "Naturel",
+        stock: variant.stock !== undefined ? String(variant.stock) : "0",
+        extraPrice: variant.extraPrice !== undefined ? String(variant.extraPrice) : "0",
+        sku: variant.sku || "",
+      })) : [],
     });
     setActiveTab("general");
     setImageUrlInput("");
@@ -218,6 +255,54 @@ function Products() {
     }));
   }
 
+  function addTag(listName, value) {
+    const trimmedValue = String(value || "").trim();
+    if (!trimmedValue) return;
+
+    setFormData((prev) => {
+      const currentList = Array.isArray(prev[listName]) ? prev[listName] : [];
+      return {
+        ...prev,
+        [listName]: currentList.includes(trimmedValue)
+          ? currentList
+          : [...currentList, trimmedValue],
+      };
+    });
+  }
+
+  function removeTag(listName, tagToRemove) {
+    setFormData((prev) => ({
+      ...prev,
+      [listName]: (Array.isArray(prev[listName]) ? prev[listName] : []).filter(
+        (tag) => tag !== tagToRemove
+      ),
+    }));
+  }
+
+  function handleVariantSubmitPayload() {
+    const normalizedSizes = (formData.sizes || []).map((size) => String(size).trim()).filter(Boolean);
+    const normalizedColors = (formData.colors || []).map((color) => String(color).trim()).filter(Boolean);
+
+    if (normalizedSizes.length === 0) normalizedSizes.push("M");
+    if (normalizedColors.length === 0) normalizedColors.push("Naturel");
+
+    const generatedVariants = [];
+
+    normalizedSizes.forEach((size) => {
+      normalizedColors.forEach((color) => {
+        generatedVariants.push({
+          size,
+          color,
+          stock: 0,
+          extraPrice: 0,
+          sku: "",
+        });
+      });
+    });
+
+    return generatedVariants;
+  }
+
   // Set Cover Image
   function handleSetCoverImage(index) {
     setFormData((prev) => {
@@ -257,6 +342,8 @@ function Products() {
       setSaving(true);
       setMessage({ type: "", text: "" });
 
+      const generatedVariants = handleVariantSubmitPayload();
+
       const payload = {
         name: formData.name.trim(),
         categoryId: Number(formData.categoryId),
@@ -269,7 +356,7 @@ function Products() {
         stock: Number(formData.stock) || 0,
         active: Boolean(formData.active),
         images: formData.images,
-        variants: formData.variants,
+        variants: generatedVariants,
       };
 
       if (editingProduct) {
@@ -732,7 +819,8 @@ function Products() {
               {[
                 { id: "general", label: "1. Général" },
                 { id: "pricing", label: "2. Prix & Stocks" },
-                { id: "images", label: `3. Photos (${formData.images.length})` },
+                { id: "variants", label: `3. Variantes (${formData.variants?.length || 0})` },
+                { id: "images", label: `4. Photos (${formData.images.length})` },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -947,7 +1035,134 @@ function Products() {
               )}
 
               {/* ========================================== */}
-              {/* TAB 3: IMAGES & AUTOMATIC FOLDERS          */}
+              {/* TAB 3: VARIANTS                            */}
+              {/* ========================================== */}
+              {activeTab === "variants" && (
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#10212f]">
+                      Variantes du produit
+                    </p>
+                    <p className="mt-1 text-[11px] text-[#667785]">
+                      Saisissez les tailles et les couleurs sous forme de liste. Le système génère automatiquement toutes les combinaisons.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="rounded-2xl border border-[#e5f1f8] bg-[#f7fbfe] p-4">
+                      <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-[#10212f]">
+                        Tailles
+                      </label>
+                      <div className="flex flex-wrap gap-2 min-h-[42px] rounded-xl border border-[#e5f1f8] bg-white p-2">
+                        {(formData.sizes || []).map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => removeTag("sizes", size)}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#eef9ff] px-3 py-1.5 text-[11px] font-semibold text-[#0f73c4]"
+                          >
+                            {size}
+                            <span className="text-[#0f73c4]">×</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Ajouter une taille : S, M, L..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === ",") {
+                              e.preventDefault();
+                              addTag("sizes", e.currentTarget.value);
+                              e.currentTarget.value = "";
+                            }
+                          }}
+                          className="flex-1 rounded-xl border border-[#e5f1f8] bg-white px-3 py-2 text-xs text-[#10212f] outline-none focus:border-[#29b6f6]"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const input = e.currentTarget.previousElementSibling;
+                            addTag("sizes", input.value);
+                            input.value = "";
+                          }}
+                          className="rounded-xl bg-[#0f73c4] px-3 py-2 text-[11px] font-semibold text-white"
+                        >
+                          Ajouter
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#e5f1f8] bg-[#f7fbfe] p-4">
+                      <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-[#10212f]">
+                        Couleurs
+                      </label>
+                      <div className="flex flex-wrap gap-2 min-h-[42px] rounded-xl border border-[#e5f1f8] bg-white p-2">
+                        {(formData.colors || []).map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => removeTag("colors", color)}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#eef9ff] px-3 py-1.5 text-[11px] font-semibold text-[#0f73c4]"
+                          >
+                            {color}
+                            <span className="text-[#0f73c4]">×</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Ajouter une couleur : Bleu, Noir, Beige..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === ",") {
+                              e.preventDefault();
+                              addTag("colors", e.currentTarget.value);
+                              e.currentTarget.value = "";
+                            }
+                          }}
+                          className="flex-1 rounded-xl border border-[#e5f1f8] bg-white px-3 py-2 text-xs text-[#10212f] outline-none focus:border-[#29b6f6]"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const input = e.currentTarget.previousElementSibling;
+                            addTag("colors", input.value);
+                            input.value = "";
+                          }}
+                          className="rounded-xl bg-[#0f73c4] px-3 py-2 text-[11px] font-semibold text-white"
+                        >
+                          Ajouter
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#dcecf6] bg-[#f0faff] p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#0f73c4]">
+                      Aperçu des combinaisons générées
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-[#10212f]">
+                      {(formData.sizes || []).length * (formData.colors || []).length} variantes préparées
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(formData.sizes || []).flatMap((size) =>
+                        (formData.colors || []).map((color) => (
+                          <span
+                            key={`${size}-${color}`}
+                            className="rounded-full border border-[#dcecf6] bg-white px-2.5 py-1 text-[10px] font-medium text-[#667785]"
+                          >
+                            {size} / {color}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================== */}
+              {/* TAB 4: IMAGES & AUTOMATIC FOLDERS          */}
               {/* ========================================== */}
               {activeTab === "images" && (
                 <div className="space-y-6">
@@ -1080,7 +1295,11 @@ function Products() {
                       type="button"
                       onClick={() =>
                         setActiveTab(
-                          activeTab === "general" ? "pricing" : "images"
+                          activeTab === "general"
+                            ? "pricing"
+                            : activeTab === "pricing"
+                              ? "variants"
+                              : "images"
                         )
                       }
                       className="text-[#0f73c4] font-semibold hover:underline"

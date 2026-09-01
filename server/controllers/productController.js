@@ -1,5 +1,35 @@
 const db = require("../config/database");
 
+const COLOR_HEX_BY_NAME = {
+  blanc: "#f8f7f4",
+  white: "#f8f7f4",
+  crème: "#e7dcc4",
+  naturel: "#d8c7a2",
+  beige: "#d8c7a2",
+  noir: "#1f1f1f",
+  black: "#1f1f1f",
+  bleu: "#1d4f7a",
+  blue: "#1d4f7a",
+  marine: "#1d4f7a",
+  indigo: "#3c4f8d",
+  vert: "#5d7b62",
+  green: "#5d7b62",
+  sage: "#7d8d75",
+  gris: "#8d8d8d",
+  grey: "#8d8d8d",
+  argent: "#c8c9cc",
+  rouge: "#a94442",
+  red: "#a94442",
+  rose: "#d7a6b8",
+  violet: "#7261a8",
+  orange: "#d4834f",
+  jaune: "#d1b65c",
+  gold: "#d1b65c",
+  brun: "#7b4a2f",
+  brown: "#7b4a2f",
+  camel: "#b38752",
+};
+
 const normalizeImageUrl = (url) => {
   const raw = String(url || "").trim();
   if (!raw) return "";
@@ -7,6 +37,29 @@ const normalizeImageUrl = (url) => {
     return raw;
   }
   return raw.startsWith("/") ? raw : `/${raw}`;
+};
+
+const buildVariantMetadata = (variants = []) => {
+  const uniqueSizes = [...new Set((variants || []).map((variant) => variant.size).filter(Boolean))];
+  const uniqueColors = [...new Set((variants || []).map((variant) => variant.color).filter(Boolean))];
+
+  const colorList = uniqueColors.map((name) => {
+    const normalizedName = String(name).trim();
+    const lookupKey = normalizedName.toLowerCase();
+    const hex = Object.keys(COLOR_HEX_BY_NAME).find((key) => lookupKey.includes(key))
+      ? COLOR_HEX_BY_NAME[Object.keys(COLOR_HEX_BY_NAME).find((key) => lookupKey.includes(key))]
+      : "#d9d9d9";
+
+    return {
+      name: normalizedName,
+      hex,
+    };
+  });
+
+  return {
+    sizes: uniqueSizes,
+    colors: colorList,
+  };
 };
 
 // ==========================================
@@ -46,6 +99,16 @@ const getProducts = async (req, res, next) => {
 
       product.images = (images || []).map((img) => normalizeImageUrl(img.url));
       product.image = product.images[0] || null;
+
+      const [variants] = await db.execute(
+        `SELECT size, color, stock, extra_price, sku FROM product_variants WHERE product_id = ? ORDER BY id ASC`,
+        [product.id]
+      );
+
+      const metadata = buildVariantMetadata(variants || []);
+      product.variants = variants || [];
+      product.sizes = metadata.sizes.length > 0 ? metadata.sizes : ["M"];
+      product.colors = metadata.colors.length > 0 ? metadata.colors : [{ name: "Naturel", hex: "#d8c7a2" }];
     }
 
     res.json(rows);
@@ -96,6 +159,16 @@ const getProductById = async (req, res, next) => {
         );
         product.images = (images || []).map((img) => normalizeImageUrl(img.url));
         product.image = product.images[0] || null;
+
+        const [variants] = await db.execute(
+          `SELECT size, color, stock, extra_price, sku FROM product_variants WHERE product_id = ? ORDER BY id ASC`,
+          [id]
+        );
+
+        const metadata = buildVariantMetadata(variants || []);
+        product.variants = variants || [];
+        product.sizes = metadata.sizes.length > 0 ? metadata.sizes : ["M"];
+        product.colors = metadata.colors.length > 0 ? metadata.colors : [{ name: "Naturel", hex: "#d8c7a2" }];
 
         // Related suggestions
         const [related] = await db.execute(
