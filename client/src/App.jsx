@@ -11,6 +11,9 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import BankPayment from "./pages/BankPayment";
 
 
 import AdminRoute from "./components/admin/AdminRoute";
@@ -69,6 +72,12 @@ function App() {
         path="/contact"
         element={<Contact />}
       />
+
+      <Route path="/cart" element={<Cart />} />
+
+      <Route path="/checkout" element={<Checkout />} />
+
+      <Route path="/bank-payment" element={<BankPayment />} />
 
 
       {/* AUTH */}

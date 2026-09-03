@@ -12,13 +12,13 @@ import {
   ChevronDownIcon,
   HeartIcon,
   ShareIcon,
-  CheckIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { apiFetch, getImageUrl, DEFAULT_PRODUCT_IMAGE } from "../lib/api";
+import { useCart } from "../context/useCart";
 
 const DEFAULT_SIZES = ["S", "M", "L", "XL", "Sur-Mesure"];
 const DEFAULT_COLORS = [
@@ -31,6 +31,7 @@ const DEFAULT_COLORS = [
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -44,13 +45,6 @@ function ProductDetail() {
 
   // Visionary Order Modal State
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({
-    name: "",
-    phone: "",
-    city: "Tunis",
-    note: "",
-  });
 
   // Accordions
   const [openTab, setOpenTab] = useState("details"); // "details", "sizes", "shipping"
@@ -59,7 +53,6 @@ function ProductDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setLoading(true);
-    setOrderSuccess(false);
 
     apiFetch(`/products/${id}`)
       .then((data) => {
@@ -83,9 +76,17 @@ function ProductDetail() {
       });
   }, [id]);
 
-  const handleOrderSubmit = (e) => {
-    e.preventDefault();
-    setOrderSuccess(true);
+  const handleAddToCart = () => {
+    const variant = product.variants?.find(
+      (item) => item.size === selectedSize && item.color === selectedColor?.name
+    );
+    addItem(product, {
+      size: selectedSize,
+      color: selectedColor,
+      quantity,
+      extraPrice: variant?.extra_price || variant?.extraPrice || 0,
+    });
+    setOrderModalOpen(true);
   };
 
   if (loading) {
@@ -395,7 +396,7 @@ function ProductDetail() {
               {/* Order Button */}
               <button
                 type="button"
-                onClick={() => setOrderModalOpen(true)}
+                onClick={handleAddToCart}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-[#0f73c4] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#0f73c4]/25 transition-all hover:bg-[#29b6f6] hover:shadow-xl hover:shadow-[#29b6f6]/30 active:scale-98"
               >
                 <ShoppingBagIcon className="h-5 w-5" />
@@ -578,9 +579,7 @@ function ProductDetail() {
         )}
       </main>
 
-      {/* ============================================================ */}
-      {/* VISIONARY ORDER MODAL                                        */}
-      {/* ============================================================ */}
+      {/* Product confirmation modal */}
       {orderModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-3xl bg-white p-7 shadow-2xl animate-in fade-in zoom-in-95">
@@ -588,7 +587,7 @@ function ProductDetail() {
               <div className="flex items-center gap-2">
                 <ShoppingBagIcon className="h-5 w-5 text-[#0f73c4]" />
                 <h3 className="text-base font-bold text-[#10212f]">
-                  Pré-commande de votre pièce
+                  Article ajouté au panier
                 </h3>
               </div>
               <button
@@ -599,33 +598,7 @@ function ProductDetail() {
               </button>
             </div>
 
-            {orderSuccess ? (
-              <div className="py-8 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                  <CheckIcon className="h-8 w-8" />
-                </div>
-                <h4 className="mt-4 text-lg font-bold text-[#10212f]">
-                  Demande de commande enregistrée !
-                </h4>
-                <p className="mt-2 text-xs text-[#667785] leading-relaxed max-w-sm mx-auto">
-                  Merci <strong>{customerInfo.name || "cher client"}</strong>. Notre atelier MERHAK vous contactera au{" "}
-                  <strong>{customerInfo.phone || "votre numéro"}</strong> pour valider les mensurations, le tissu et convenir de la livraison.
-                </p>
-                <div className="mt-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOrderModalOpen(false);
-                      setOrderSuccess(false);
-                    }}
-                    className="rounded-full bg-[#0f73c4] px-8 py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#29b6f6]"
-                  >
-                    Fermer et continuer
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleOrderSubmit} className="mt-6 space-y-4">
+            <div className="mt-6 space-y-4">
                 {/* Summary Box */}
                 <div className="flex items-center gap-4 rounded-2xl bg-[#f7fbfe] p-4 border border-[#e5f1f8]">
                   <img
@@ -644,88 +617,23 @@ function ProductDetail() {
                   </div>
                 </div>
 
-                {/* Form Fields */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-[#10212f]">
-                      Votre Nom complet <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: Ahmed Ben Salem"
-                      value={customerInfo.name}
-                      onChange={(e) =>
-                        setCustomerInfo({ ...customerInfo, name: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-[#e5f1f8] bg-[#f7fbfe] px-3.5 py-2.5 text-xs text-[#10212f] outline-none focus:border-[#29b6f6] focus:bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-[#10212f]">
-                      Numéro de Téléphone <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="Ex: 98 123 456"
-                      value={customerInfo.phone}
-                      onChange={(e) =>
-                        setCustomerInfo({ ...customerInfo, phone: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-[#e5f1f8] bg-[#f7fbfe] px-3.5 py-2.5 text-xs text-[#10212f] outline-none focus:border-[#29b6f6] focus:bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-[#10212f]">
-                    Ville / Adresse de livraison
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: La Marsa, Tunis..."
-                    value={customerInfo.city}
-                    onChange={(e) =>
-                      setCustomerInfo({ ...customerInfo, city: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#e5f1f8] bg-[#f7fbfe] px-3.5 py-2.5 text-xs text-[#10212f] outline-none focus:border-[#29b6f6] focus:bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-[#10212f]">
-                    Note pour l'atelier (Optionnel)
-                  </label>
-                  <textarea
-                    rows="2"
-                    placeholder="Précisions de mesures, longueur de manche souhaitée..."
-                    value={customerInfo.note}
-                    onChange={(e) =>
-                      setCustomerInfo({ ...customerInfo, note: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#e5f1f8] bg-[#f7fbfe] px-3.5 py-2 text-xs text-[#10212f] outline-none focus:border-[#29b6f6] focus:bg-white"
-                  />
-                </div>
-
                 <div className="pt-3 border-t border-[#e5f1f8] flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setOrderModalOpen(false)}
                     className="rounded-full border border-[#dcecf6] px-5 py-2.5 text-xs font-semibold text-[#667785] hover:bg-[#f7fbfe]"
                   >
-                    Annuler
+                    Continuer le shopping
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={() => navigate("/cart")}
                     className="rounded-full bg-[#0f73c4] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0f73c4]/20 transition hover:bg-[#29b6f6]"
                   >
-                    Confirmer la commande ({totalPrice} TND)
+                    Voir le panier et commander
                   </button>
                 </div>
-              </form>
-            )}
+              </div>
           </div>
         </div>
       )}

@@ -1,5 +1,62 @@
 const db = require("../config/database");
 
+const createStandardOrder = async (req, res, next) => {
+  const connection = await db.getConnection();
+  try {
+    const { firstName, lastName, phone, address, note, deliveryMethod, paymentMethod, items } = req.body;
+    if (!firstName || !lastName || !phone || !address || !Array.isArray(items) || items.length === 0) {
+      const error = new Error("Veuillez remplir vos coordonnées et ajouter au moins un article.");
+      error.status = 400;
+      throw error;
+    }
+
+    await connection.beginTransaction();
+    let total = 0;
+    const validatedItems = [];
+    for (const item of items) {
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Quantité invalide.");
+      const [products] = await connection.execute(
+        `SELECT p.id, p.price, p.stock, pv.id AS variant_id, pv.stock AS variant_stock, pv.extra_price,
+          (SELECT COUNT(*) FROM product_variants WHERE product_id = p.id) AS variant_count
+         FROM products p LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.size = ? AND pv.color = ?
+         WHERE p.id = ? AND p.active = true`,
+        [item.size || "", item.color || "", item.productId]
+      );
+      if (!products.length) throw new Error("Un article de votre panier n'est plus disponible.");
+      const product = products[0];
+      if (product.variant_count > 0 && !product.variant_id) throw new Error("La taille ou la couleur sélectionnée n'est plus disponible.");
+      const availableStock = product.variant_id ? product.variant_stock : product.stock;
+      if (availableStock !== null && availableStock < quantity) throw new Error("Stock insuffisant pour un article sélectionné.");
+      const unitPrice = Number(product.price) + Number(product.extra_price || 0);
+      total += unitPrice * quantity;
+      validatedItems.push({ ...item, variantId: product.variant_id, unitPrice });
+    }
+
+    const summary = [deliveryMethod, paymentMethod, note].filter(Boolean).join(" | ") || null;
+    const [result] = await connection.execute(
+      `INSERT INTO orders (client_id, first_name, last_name, phone, address, type, status, note, total_price, created_at)
+       VALUES (?, ?, ?, ?, ?, 'STANDARD', 'NEW', ?, ?, NOW())`,
+      [req.session?.userId || null, firstName.trim(), lastName.trim(), phone.trim(), address.trim(), summary, total.toFixed(2)]
+    );
+    for (const item of validatedItems) {
+      await connection.execute(
+        `INSERT INTO order_items (order_id, product_id, variant_id, quantity, unit_price) VALUES (?, ?, ?, ?, ?)`,
+        [result.insertId, item.productId, item.variantId, item.quantity, item.unitPrice.toFixed(2)]
+      );
+      if (item.variantId) await connection.execute(`UPDATE product_variants SET stock = stock - ? WHERE id = ?`, [item.quantity, item.variantId]);
+      else await connection.execute(`UPDATE products SET stock = stock - ? WHERE id = ?`, [item.quantity, item.productId]);
+    }
+    await connection.commit();
+    res.status(201).json({ id: result.insertId, totalPrice: total.toFixed(2) });
+  } catch (error) {
+    await connection.rollback();
+    next(error);
+  } finally {
+    connection.release();
+  }
+};
+
 // ==========================================
 // GET ALL ORDERS
 // ==========================================
@@ -229,6 +286,7 @@ const deleteOrder = async (req, res, next) => {
 };
 
 module.exports = {
+  createStandardOrder,
   getOrders,
   getOrderById,
   updateOrderStatusAndNote,

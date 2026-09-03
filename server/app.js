@@ -35,6 +35,8 @@ const adminProductRoutes =
   require("./routes/adminProductRoutes");
 const orderRoutes =
   require("./routes/orderRoutes");
+const publicOrderRoutes =
+  require("./routes/publicOrderRoutes");
 
 const customOrderRoutes =
   require("./routes/customOrderRoutes");
@@ -250,6 +252,11 @@ app.use(
 app.use(
   "/api/admin/orders",
   orderRoutes
+);
+
+app.use(
+  "/api/orders",
+  publicOrderRoutes
 );
 
 app.use(
