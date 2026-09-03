@@ -11,6 +11,7 @@ import {
 import {
   AuthProvider,
 } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
 
 import App from "./App";
 
@@ -25,7 +26,9 @@ createRoot(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CartProvider>
+          <App />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>

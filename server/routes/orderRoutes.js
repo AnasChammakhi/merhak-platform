@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+  createStandardOrder,
   getOrders,
   getOrderById,
   updateOrderStatusAndNote,
@@ -10,6 +11,7 @@ const {
 } = require("../controllers/orderController");
 
 router.get("/", getOrders);
+router.post("/", createStandardOrder);
 router.get("/:id", getOrderById);
 router.patch("/:id", updateOrderStatusAndNote);
 router.post("/:id/pay", markAsPaid);

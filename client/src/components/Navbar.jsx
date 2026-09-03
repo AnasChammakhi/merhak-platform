@@ -8,11 +8,13 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   SparklesIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 
 import logoBlue from "../assets/merhak logo blue simple.png";
 import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../lib/api";
+import { useCart } from "../context/useCart";
 
 const DEFAULT_BOUTIQUE = [
   {
@@ -45,6 +47,7 @@ const DEFAULT_BOUTIQUE = [
 function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -299,6 +302,10 @@ function Navbar() {
 
           {/* User / Auth Actions */}
           <div className="hidden items-center gap-3 md:flex">
+            <Link to="/cart" className="relative rounded-full p-2 text-[#0f73c4] hover:bg-[#eef9ff]" aria-label="Ouvrir le panier">
+              <ShoppingBagIcon className="h-5 w-5" />
+              {itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0f73c4] px-1 text-[10px] font-bold text-white">{itemCount}</span>}
+            </Link>
             {!user ? (
               <Link
                 to="/signin"
@@ -456,6 +463,11 @@ function Navbar() {
                 className="font-medium text-[#10212f]"
               >
                 Contact
+              </Link>
+
+              <Link to="/cart" onClick={() => setMobileOpen(false)} className="flex items-center justify-between rounded-xl bg-[#eef9ff] px-4 py-3 font-semibold text-[#0f73c4]">
+                <span className="flex items-center gap-2"><ShoppingBagIcon className="h-5 w-5" /> Panier</span>
+                <span>{itemCount}</span>
               </Link>
 
               {!user ? (
