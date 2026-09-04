@@ -192,9 +192,9 @@ function CustomOrderCreate() {
       });
 
       if (isEditMode) {
-        navigate(`/admin/orders/${id}`); // Go back to view
+        navigate(`/admin/custom-orders/${id}`); // Go back to view
       } else {
-        navigate(`/admin/orders/${response.id}`); // View new order
+        navigate(`/admin/custom-orders/${response.id}`); // View new order
       }
     } catch (err) {
       setErrorMsg(err.message);

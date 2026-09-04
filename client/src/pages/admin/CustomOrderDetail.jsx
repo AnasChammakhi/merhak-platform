@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, BanknotesIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, BanknotesIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { apiFetch } from "../../lib/api";
 
 function CustomOrderDetail() {
@@ -156,6 +156,13 @@ function CustomOrderDetail() {
               {paying ? "Enregistrement..." : "Marquer comme payé"}
             </button>
           )}
+          <button
+            onClick={() => navigate(`/admin/custom-orders/${order.id}/edit`)}
+            className="rounded-xl p-2.5 text-[#667785] transition hover:bg-yellow-50 hover:text-yellow-600"
+            title="Modifier détails & prix"
+          >
+            <PencilIcon className="h-6 w-6" />
+          </button>
           <button
             onClick={handleDelete}
             className="rounded-xl p-2.5 text-[#667785] transition hover:bg-red-50 hover:text-red-600"
