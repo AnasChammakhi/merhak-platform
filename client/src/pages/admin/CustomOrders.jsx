@@ -237,7 +237,7 @@ function CustomOrders() {
                     <td className="px-6 py-5">
                       <div className="flex justify-end gap-2">
                         <Link
-                          to={`/admin/orders/${order.id}`}
+                          to={`/admin/custom-orders/${order.id}`}
                           className="rounded-xl p-2.5 text-[#667785] transition hover:bg-[#eaf8ff] hover:text-[#0f73c4]"
                           title="Gérer statut & paiements"
                         >

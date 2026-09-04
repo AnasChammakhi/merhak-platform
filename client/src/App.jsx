@@ -28,6 +28,7 @@ import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
 import OrderDetail from "./pages/admin/OrderDetail";
 import CustomOrders from "./pages/admin/CustomOrders";
+import CustomOrderDetail from "./pages/admin/CustomOrderDetail";
 import CustomOrderCreate from "./pages/admin/CustomOrderCreate";
 import Calendar from "./pages/admin/Calendar";
 
@@ -156,6 +157,13 @@ function App() {
             path="/admin/custom-orders"
             element={
               <CustomOrders />
+            }
+          />
+
+          <Route
+            path="/admin/custom-orders/:id"
+            element={
+              <CustomOrderDetail />
             }
           />
 
