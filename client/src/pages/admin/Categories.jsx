@@ -200,14 +200,12 @@ function Categories() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#0f73c4]">
-            Administration / E-commerce
-          </p>
-          <h1 className="mt-1 text-3xl font-bold text-[#10212f]">
-            Gestion des Catégories
+          <p className="text-sm font-semibold text-[#0f73c4]">Administration</p>
+          <h1 className="mt-1 text-3xl font-semibold text-[#10212f]">
+            Gestion des catégories
           </h1>
-          <p className="mt-1 text-sm text-[#667785]">
-            Configurez les collections principales (Homme, Femme...) et leurs sous-catégories pour alimenter la boutique et la navigation.
+          <p className="mt-2 text-sm text-[#667785]">
+            Configurez les collections principales et leurs sous-catégories.
           </p>
         </div>
 
@@ -225,9 +223,9 @@ function Categories() {
 
           <button
             onClick={() => handleOpenCreate("")}
-            className="inline-flex items-center gap-2 rounded-full bg-[#0f73c4] px-6 py-2.5 text-xs font-semibold text-white shadow-md shadow-[#0f73c4]/20 transition hover:bg-[#29b6f6]"
+            className="primary-button flex items-center justify-center gap-2"
           >
-            <PlusIcon className="h-4 w-4" />
+            <PlusIcon className="h-5 w-5" />
             Nouvelle catégorie
           </button>
         </div>
@@ -291,16 +289,15 @@ function Categories() {
         </div>
       </div>
 
-      {/* Controls: Search, Filter, View Mode */}
-      <div className="mt-8 flex flex-col gap-4 rounded-3xl border border-[#e5f1f8] bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-sm">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8ca0ad]" />
+      <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-1 items-center rounded-2xl border border-[#e5f1f8] bg-white px-4 shadow-sm">
+          <MagnifyingGlassIcon className="h-5 w-5 text-[#8ca0ad]" />
           <input
             type="text"
             placeholder="Rechercher une catégorie..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-full border border-[#e5f1f8] bg-[#f7fbfe] py-2.5 pl-10 pr-4 text-xs text-[#10212f] outline-none transition focus:border-[#29b6f6] focus:bg-white sm:max-w-xs"
+            className="w-full bg-transparent px-3 py-3 text-sm text-[#10212f] outline-none"
           />
         </div>
 
@@ -309,10 +306,10 @@ function Categories() {
           <select
             value={parentFilter}
             onChange={(e) => setParentFilter(e.target.value)}
-            className="rounded-full border border-[#e5f1f8] bg-[#f7fbfe] px-4 py-2 text-xs font-medium text-[#10212f] outline-none transition focus:border-[#29b6f6]"
+            className="rounded-2xl border border-[#e5f1f8] bg-white px-4 py-3 text-sm text-[#10212f] shadow-sm outline-none"
           >
             <option value="all">Tous les niveaux</option>
-            <option value="root">Racine seulement (Homme, Femme...)</option>
+            <option value="root">Racine seulement</option>
             {rootCategories.map((r) => (
               <option key={r.id} value={r.id}>
                 Sous-catégories de: {r.name}
@@ -426,18 +423,18 @@ function Categories() {
 
                   <button
                     onClick={() => handleOpenEdit(root)}
-                    className="rounded-xl border border-[#dcecf6] p-1.5 text-[#667785] transition hover:border-[#0f73c4] hover:text-[#0f73c4]"
+                    className="rounded-xl p-2 text-[#667785] transition hover:bg-yellow-50 hover:text-yellow-600"
                     title="Modifier"
                   >
-                    <PencilSquareIcon className="h-4 w-4" />
+                    <PencilSquareIcon className="h-5 w-5" />
                   </button>
 
                   <button
                     onClick={() => handleOpenDelete(root)}
-                    className="rounded-xl border border-[#dcecf6] p-1.5 text-[#667785] transition hover:border-red-400 hover:text-red-500"
+                    className="rounded-xl p-2 text-[#667785] transition hover:bg-red-50 hover:text-red-600"
                     title="Supprimer"
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -506,13 +503,13 @@ function Categories() {
         <div className="mt-8 overflow-hidden rounded-3xl border border-[#e5f1f8] bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-[#e5f1f8] bg-[#f7fbfe] text-[11px] font-bold uppercase tracking-wider text-[#667785]">
+              <thead className="border-b border-[#e5f1f8] bg-[#f7fbfe]">
                 <tr>
-                  <th className="px-6 py-4">Nom de la catégorie</th>
-                  <th className="px-6 py-4">Catégorie parente</th>
-                  <th className="px-6 py-4">Description</th>
-                  <th className="px-6 py-4 text-center">Sous-catégories</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 font-semibold text-[#10212f]">Nom de la catégorie</th>
+                  <th className="px-6 py-4 font-semibold text-[#10212f]">Catégorie parente</th>
+                  <th className="px-6 py-4 font-semibold text-[#10212f]">Description</th>
+                  <th className="px-6 py-4 font-semibold text-center text-[#10212f]">Sous-catégories</th>
+                  <th className="px-6 py-4 font-semibold text-right text-[#10212f]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e5f1f8]">
@@ -547,17 +544,17 @@ function Categories() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenEdit(c)}
-                          className="rounded-lg border border-[#dcecf6] p-1.5 text-[#667785] transition hover:border-[#0f73c4] hover:text-[#0f73c4]"
+                          className="rounded-xl p-2.5 text-[#667785] transition hover:bg-yellow-50 hover:text-yellow-600"
                           title="Modifier"
                         >
-                          <PencilSquareIcon className="h-3.5 w-3.5" />
+                          <PencilSquareIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => handleOpenDelete(c)}
-                          className="rounded-lg border border-[#dcecf6] p-1.5 text-[#667785] transition hover:border-red-400 hover:text-red-500"
+                          className="rounded-xl p-2.5 text-[#667785] transition hover:bg-red-50 hover:text-red-600"
                           title="Supprimer"
                         >
-                          <TrashIcon className="h-3.5 w-3.5" />
+                          <TrashIcon className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
