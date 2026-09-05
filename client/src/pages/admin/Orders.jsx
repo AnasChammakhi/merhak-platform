@@ -12,6 +12,22 @@ function Orders() {
   const [message, setMessage] = useState("");
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
+  const [showPaid, setShowPaid] = useState(() => {
+    try { const s = localStorage.getItem("ordersFilters"); if (s) return JSON.parse(s).showPaid ?? true; } catch (e) {} return true;
+  });
+  const [showDeposit, setShowDeposit] = useState(() => {
+    try { const s = localStorage.getItem("ordersFilters"); if (s) return JSON.parse(s).showDeposit ?? true; } catch (e) {} return true;
+  });
+  const [showUnpaid, setShowUnpaid] = useState(() => {
+    try { const s = localStorage.getItem("ordersFilters"); if (s) return JSON.parse(s).showUnpaid ?? true; } catch (e) {} return true;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ordersFilters", JSON.stringify({ showPaid, showDeposit, showUnpaid }));
+    } catch (e) {}
+  }, [showPaid, showDeposit, showUnpaid]);
+
   async function loadOrders() {
     try {
       setLoading(true);
@@ -86,8 +102,15 @@ function Orders() {
       result = result.filter((order) => order.status === statusFilter);
     }
 
+    result = result.filter((order) => {
+      if (order.payment_status === "PAID" && !showPaid) return false;
+      if (order.payment_status === "DEPOSIT" && !showDeposit) return false;
+      if (order.payment_status === "UNPAID" && !showUnpaid) return false;
+      return true;
+    });
+
     return result;
-  }, [orders, search, typeFilter, statusFilter]);
+  }, [orders, search, typeFilter, statusFilter, showPaid, showDeposit, showUnpaid]);
 
   function getStatusColor(status) {
     switch (status) {
@@ -171,6 +194,46 @@ function Orders() {
           <option value="DELIVERED">Livrée</option>
           <option value="CANCELLED">Annulée</option>
         </select>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-4 px-1">
+        <span className="text-sm font-medium text-[#10212f]">Afficher :</span>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showUnpaid}
+            onChange={() => setShowUnpaid(!showUnpaid)}
+            className="rounded text-red-500 focus:ring-red-500"
+          />
+          <span className="text-sm text-[#10212f] flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+            Non payé
+          </span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showDeposit}
+            onChange={() => setShowDeposit(!showDeposit)}
+            className="rounded text-orange-500 focus:ring-orange-500"
+          />
+          <span className="text-sm text-[#10212f] flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-orange-500 inline-block"></span>
+            Acompte payé
+          </span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showPaid}
+            onChange={() => setShowPaid(!showPaid)}
+            className="rounded text-green-500 focus:ring-green-500"
+          />
+          <span className="text-sm text-[#10212f] flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+            Payé en totalité
+          </span>
+        </label>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm">
